@@ -1,0 +1,68 @@
+/* src/app/globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #F7F4EE;
+}
+
+.ticket-divider {
+  position: relative;
+  border-top: 2px dashed #D8D2C4;
+}
+
+.ticket-divider::before,
+.ticket-divider::after {
+  content: "";
+  position: absolute;
+  top: -11px;
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  background: #F7F4EE;
+}
+
+.ticket-divider::before {
+  left: -11px;
+}
+
+.ticket-divider::after {
+  right: -11px;
+}
+
+.ticket-divider--on-green::before,
+.ticket-divider--on-green::after {
+  background: #1F4A38;
+}
+
+.stamp-ring {
+  border: 2px dashed currentColor;
+  border-radius: 9999px;
+  transform: rotate(-10deg);
+}
+
+.id-card-notch {
+  position: relative;
+}
+
+.id-card-notch::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 24px;
+  width: 34px;
+  height: 6px;
+  border-radius: 0 0 6px 6px;
+  background: #D8D2C4;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+  }
+}
