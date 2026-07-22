@@ -1,17 +1,349 @@
-// app/admin/committee/page.tsx
 "use client";
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { AdminNav } from "@/components/AdminNav";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Alert } from "@/components/ui/alert";
-import { Plus, Edit, Trash2, Users, Award, Shield, Phone, Mail, X } from "lucide-react";
-import { committeeService } from "@/services/committeeService";
-import { extractErrorMessage } from "@/lib/apiClient";
+import axios from "axios";
+
+const AdminNav = () => {
+  return (
+    <nav className="bg-white border-b border-border px-6 py-4">
+      <div className="mx-auto max-w-6xl flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="font-display text-xl font-bold text-foreground">Admin Panel</span>
+        </div>
+        <div className="flex items-center gap-4">
+          <a href="/admin/dashboard" className="text-sm text-muted-foreground hover:text-primary transition-colors">Dashboard</a>
+          <a href="/admin/committee" className="text-sm text-primary font-medium">Committee</a>
+          <a href="/admin/members" className="text-sm text-muted-foreground hover:text-primary transition-colors">Members</a>
+        </div>
+      </div>
+    </nav>
+  );
+};
+
+const Card = ({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => {
+  return (
+    <div className={`bg-white rounded-xl border border-border shadow-sm ${className}`}>
+      {children}
+    </div>
+  );
+};
+
+const CardHeader = ({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => {
+  return (
+    <div className={`px-6 py-4 border-b border-border ${className}`}>
+      {children}
+    </div>
+  );
+};
+
+const CardTitle = ({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => {
+  return (
+    <h3 className={`text-lg font-semibold text-foreground ${className}`}>{children}</h3>
+  );
+};
+
+const CardContent = ({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => {
+  return (
+    <div className={`px-6 py-4 ${className}`}>{children}</div>
+  );
+};
+
+const Button = ({
+  children,
+  type = "button",
+  variant = "default",
+  size = "default",
+  disabled = false,
+  className = "",
+  onClick,
+}: {
+  children: React.ReactNode;
+  type?: "button" | "submit" | "reset";
+  variant?: "default" | "secondary" | "destructive" | "outline" | "ghost";
+  size?: "default" | "icon" | "sm" | "lg";
+  disabled?: boolean;
+  className?: string;
+  onClick?: () => void;
+}) => {
+  const baseStyles = "inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none";
+  const variantStyles = {
+    default: "bg-primary text-white hover:bg-primary/90 focus:ring-primary/40",
+    secondary: "bg-white text-foreground hover:bg-primary/5 focus:ring-primary/40 border border-border",
+    destructive: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500/40",
+    outline: "border-2 border-border bg-white/50 text-ink hover:border-primary hover:bg-primary/5 hover:text-primary",
+    ghost: "text-muted-foreground hover:bg-primary/5 hover:text-primary",
+  };
+  const sizeStyles = {
+    default: "h-10 px-4 py-2 text-sm rounded-lg",
+    icon: "h-9 w-9 rounded-lg",
+    sm: "h-8 px-3 py-1 text-xs rounded-lg",
+    lg: "h-12 px-6 py-3 text-base rounded-xl",
+  };
+
+  return (
+    <button
+      type={type}
+      disabled={disabled}
+      onClick={onClick}
+      className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
+    >
+      {children}
+    </button>
+  );
+};
+
+const Input = ({
+  id,
+  type = "text",
+  placeholder,
+  className = "",
+  required = false,
+  value,
+  onChange,
+  accept,
+}: {
+  id?: string;
+  type?: string;
+  placeholder?: string;
+  className?: string;
+  required?: boolean;
+  value?: string | number;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  accept?: string;
+}) => {
+  return (
+    <input
+      id={id}
+      type={type}
+      placeholder={placeholder}
+      required={required}
+      value={value}
+      onChange={onChange}
+      accept={accept}
+      className={`w-full h-11 rounded-xl border border-border bg-white/80 px-4 py-2 text-sm text-foreground shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary transition-all duration-200 ${className}`}
+    />
+  );
+};
+
+const Label = ({
+  children,
+  htmlFor,
+  className = "",
+}: {
+  children: React.ReactNode;
+  htmlFor?: string;
+  className?: string;
+}) => {
+  return (
+    <label
+      htmlFor={htmlFor}
+      className={`text-sm font-medium text-foreground ${className}`}
+    >
+      {children}
+    </label>
+  );
+};
+
+const Alert = ({
+  children,
+  variant = "default",
+  className = "",
+}: {
+  children: React.ReactNode;
+  variant?: "default" | "destructive";
+  className?: string;
+}) => {
+  const variantStyles = {
+    default: "bg-blue-50 border-blue-200 text-blue-800",
+    destructive: "bg-red-50 border-red-300 text-red-800",
+  };
+
+  return (
+    <div
+      className={`flex items-center gap-3 rounded-xl border p-4 shadow-sm ${variantStyles[variant]} ${className}`}
+    >
+      {children}
+    </div>
+  );
+};
+
+const Plus = ({ className = "", size = 16 }) => (
+  <svg
+    stroke="currentColor"
+    fill="none"
+    strokeWidth="2"
+    viewBox="0 0 24 24"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    height={size}
+    width={size}
+    className={className}
+  >
+    <line x1="12" y1="5" x2="12" y2="19"></line>
+    <line x1="5" y1="12" x2="19" y2="12"></line>
+  </svg>
+);
+
+const Edit = ({ className = "", size = 16 }) => (
+  <svg
+    stroke="currentColor"
+    fill="none"
+    strokeWidth="2"
+    viewBox="0 0 24 24"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    height={size}
+    width={size}
+    className={className}
+  >
+    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+  </svg>
+);
+
+const Trash2 = ({ className = "", size = 16 }) => (
+  <svg
+    stroke="currentColor"
+    fill="none"
+    strokeWidth="2"
+    viewBox="0 0 24 24"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    height={size}
+    width={size}
+    className={className}
+  >
+    <polyline points="3 6 5 6 21 6"></polyline>
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+  </svg>
+);
+
+const Users = ({ className = "", size = 16 }) => (
+  <svg
+    stroke="currentColor"
+    fill="none"
+    strokeWidth="2"
+    viewBox="0 0 24 24"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    height={size}
+    width={size}
+    className={className}
+  >
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+    <circle cx="9" cy="7" r="4"></circle>
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+  </svg>
+);
+
+const Award = ({ className = "", size = 16 }) => (
+  <svg
+    stroke="currentColor"
+    fill="none"
+    strokeWidth="2"
+    viewBox="0 0 24 24"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    height={size}
+    width={size}
+    className={className}
+  >
+    <circle cx="12" cy="8" r="7"></circle>
+    <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+  </svg>
+);
+
+const Shield = ({ className = "", size = 16 }) => (
+  <svg
+    stroke="currentColor"
+    fill="none"
+    strokeWidth="2"
+    viewBox="0 0 24 24"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    height={size}
+    width={size}
+    className={className}
+  >
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+  </svg>
+);
+
+const Phone = ({ className = "", size = 14 }) => (
+  <svg
+    stroke="currentColor"
+    fill="none"
+    strokeWidth="2"
+    viewBox="0 0 24 24"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    height={size}
+    width={size}
+    className={className}
+  >
+    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path>
+  </svg>
+);
+
+const Mail = ({ className = "", size = 14 }) => (
+  <svg
+    stroke="currentColor"
+    fill="none"
+    strokeWidth="2"
+    viewBox="0 0 24 24"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    height={size}
+    width={size}
+    className={className}
+  >
+    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+    <polyline points="22,6 12,13 2,6"></polyline>
+  </svg>
+);
+
+const X = ({ className = "", size = 20 }) => (
+  <svg
+    stroke="currentColor"
+    fill="none"
+    strokeWidth="2"
+    viewBox="0 0 24 24"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    height={size}
+    width={size}
+    className={className}
+  >
+    <line x1="18" y1="6" x2="6" y2="18"></line>
+    <line x1="6" y1="6" x2="18" y2="18"></line>
+  </svg>
+);
 
 const COMMITTEE_TYPES = [
   { value: "executive", label: "Executive Committee", icon: Award },
@@ -22,6 +354,36 @@ const COMMITTEE_TYPES = [
 ];
 
 const YEARS = [2024, 2025, 2026];
+
+const committeeService = {
+  listAdmin: async () => {
+    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/admin/committee`);
+    return response.data;
+  },
+  create: async (data: FormData) => {
+    const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/admin/committee`, data, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data;
+  },
+  update: async (id: string, data: FormData) => {
+    const response = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/admin/committee/${id}`, data, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data;
+  },
+  delete: async (id: string) => {
+    const response = await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/admin/committee/${id}`);
+    return response.data;
+  },
+};
+
+const extractErrorMessage = (error: any): string => {
+  if (error.response?.data?.message) return error.response.data.message;
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  return "An unexpected error occurred. Please try again.";
+};
 
 export default function AdminCommitteePage() {
   const queryClient = useQueryClient();

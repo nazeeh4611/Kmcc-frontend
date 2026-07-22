@@ -41,7 +41,7 @@ export default function Pillars() {
           <span className="font-utility text-xs font-semibold uppercase tracking-[0.18em] text-maroon">
             What the chapter offers
           </span>
-          <h2 className="mt-4 font-display text-3xl font-bold text-teak sm:text-4xl">
+          <h2 className="mt-4 font-display text-3xl font-bold text-ink sm:text-4xl">
             Everything the community needs, organised
           </h2>
         </div>
@@ -52,13 +52,13 @@ export default function Pillars() {
             return (
               <div
                 key={pillar.title}
-                className="group rounded-2xl border border-teak/10 bg-ivory p-8 transition-all duration-300 hover:-translate-y-1 hover:border-gold/40 hover:shadow-[0_20px_40px_-20px_rgba(122,39,51,0.25)]"
+                className="group rounded-2xl border border-line bg-paper p-8 transition-all duration-300 hover:-translate-y-1 hover:border-brass/40 hover:shadow-[0_20px_40px_-20px_rgba(122,39,51,0.25)]"
               >
-                <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-maroon/10 text-maroon transition-colors group-hover:bg-maroon group-hover:text-gold">
+                <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-maroon-100 text-maroon transition-colors group-hover:bg-maroon group-hover:text-white">
                   <Icon className="h-6 w-6" />
                 </span>
-                <h3 className="mt-6 font-display text-lg font-semibold text-teak">{pillar.title}</h3>
-                <p className="mt-2 font-body text-sm leading-relaxed text-teak/60">{pillar.body}</p>
+                <h3 className="mt-6 font-display text-lg font-semibold text-ink">{pillar.title}</h3>
+                <p className="mt-2 font-body text-sm leading-relaxed text-slate">{pillar.body}</p>
               </div>
             );
           })}

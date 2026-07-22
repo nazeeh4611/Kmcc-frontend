@@ -1,21 +1,218 @@
-// app/admin/members/new/page.tsx
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AdminNav } from "@/components/AdminNav";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Alert } from "@/components/ui/alert";
-import { memberService } from "@/services/memberService";
-import { metaService } from "@/services/metaService";
-import { extractErrorMessage } from "@/lib/apiClient";
+import axios from "axios";
+
+const AdminNav = () => {
+  return (
+    <nav className="bg-white border-b border-border px-6 py-4">
+      <div className="mx-auto max-w-6xl flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="font-display text-xl font-bold text-foreground">Admin Panel</span>
+        </div>
+        <div className="flex items-center gap-4">
+          <a href="/admin/dashboard" className="text-sm text-muted-foreground hover:text-primary transition-colors">Dashboard</a>
+          <a href="/admin/members" className="text-sm text-primary font-medium">Members</a>
+          <a href="/admin/committee" className="text-sm text-muted-foreground hover:text-primary transition-colors">Committee</a>
+          <a href="/admin/banners" className="text-sm text-muted-foreground hover:text-primary transition-colors">Banners</a>
+        </div>
+      </div>
+    </nav>
+  );
+};
+
+const Card = ({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => {
+  return (
+    <div className={`bg-white rounded-xl border border-border shadow-sm ${className}`}>
+      {children}
+    </div>
+  );
+};
+
+const CardHeader = ({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => {
+  return (
+    <div className={`px-6 py-4 border-b border-border ${className}`}>
+      {children}
+    </div>
+  );
+};
+
+const CardTitle = ({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => {
+  return (
+    <h3 className={`text-lg font-semibold text-foreground ${className}`}>{children}</h3>
+  );
+};
+
+const CardContent = ({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => {
+  return (
+    <div className={`px-6 py-4 ${className}`}>{children}</div>
+  );
+};
+
+const Button = ({
+  children,
+  type = "button",
+  variant = "default",
+  disabled = false,
+  className = "",
+  onClick,
+}: {
+  children: React.ReactNode;
+  type?: "button" | "submit" | "reset";
+  variant?: "default" | "outline";
+  disabled?: boolean;
+  className?: string;
+  onClick?: () => void;
+}) => {
+  const baseStyles = "inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none";
+  const variantStyles = {
+    default: "bg-primary text-white hover:bg-primary/90 focus:ring-primary/40",
+    outline: "border border-border bg-white text-foreground hover:bg-primary/5 hover:text-primary focus:ring-primary/40",
+  };
+  const sizeStyles = "h-10 px-4 py-2 text-sm rounded-lg";
+
+  return (
+    <button
+      type={type}
+      disabled={disabled}
+      onClick={onClick}
+      className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles} ${className}`}
+    >
+      {children}
+    </button>
+  );
+};
+
+const Input = ({
+  id,
+  type = "text",
+  placeholder,
+  className = "",
+  required = false,
+  value,
+  onChange,
+  accept,
+}: {
+  id?: string;
+  type?: string;
+  placeholder?: string;
+  className?: string;
+  required?: boolean;
+  value?: string | number;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  accept?: string;
+}) => {
+  return (
+    <input
+      id={id}
+      type={type}
+      placeholder={placeholder}
+      required={required}
+      value={value}
+      onChange={onChange}
+      accept={accept}
+      className={`w-full h-12 rounded-xl border border-border bg-white/80 px-4 py-2 text-sm text-foreground shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary transition-all duration-200 ${className}`}
+    />
+  );
+};
+
+const Label = ({
+  children,
+  htmlFor,
+  className = "",
+}: {
+  children: React.ReactNode;
+  htmlFor?: string;
+  className?: string;
+}) => {
+  return (
+    <label
+      htmlFor={htmlFor}
+      className={`text-sm font-medium text-foreground ${className}`}
+    >
+      {children}
+    </label>
+  );
+};
+
+const Alert = ({
+  children,
+  variant = "default",
+  className = "",
+}: {
+  children: React.ReactNode;
+  variant?: "default" | "destructive";
+  className?: string;
+}) => {
+  const variantStyles = {
+    default: "bg-blue-50 border-blue-200 text-blue-800",
+    destructive: "bg-red-50 border-red-300 text-red-800",
+  };
+
+  return (
+    <div
+      className={`flex items-center gap-3 rounded-xl border p-4 shadow-sm ${variantStyles[variant]} ${className}`}
+    >
+      {children}
+    </div>
+  );
+};
 
 const selectClass =
   "flex h-12 w-full rounded-xl border border-border bg-white/80 px-4 py-2 text-sm text-foreground shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary transition-all duration-200";
+
+const memberService = {
+  create: async (formData: FormData) => {
+    const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/admin/members`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data;
+  },
+};
+
+const metaService = {
+  listZones: async () => {
+    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/public/meta/zones`);
+    return response.data;
+  },
+  listMembershipPlans: async () => {
+    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/public/meta/plans`);
+    return response.data;
+  },
+};
+
+const extractErrorMessage = (error: any): string => {
+  if (error.response?.data?.message) return error.response.data.message;
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  return "An unexpected error occurred. Please try again.";
+};
 
 export default function NewMemberPage() {
   const router = useRouter();
@@ -193,7 +390,7 @@ export default function NewMemberPage() {
                   <Label htmlFor="zone">Zone</Label>
                   <select id="zone" className={selectClass} value={form.zone} onChange={handleChange("zone")}>
                     <option value="">Select zone</option>
-                    {zones?.map((zone) => (
+                    {zones?.map((zone: any) => (
                       <option key={zone._id} value={zone._id}>
                         {zone.name}
                       </option>
@@ -222,7 +419,7 @@ export default function NewMemberPage() {
                     onChange={handleChange("membershipType")}
                   >
                     <option value="">Select a plan</option>
-                    {plans?.map((plan) => (
+                    {plans?.map((plan: any) => (
                       <option key={plan._id} value={plan._id}>
                         {plan.title} ({plan.duration}mo)
                       </option>

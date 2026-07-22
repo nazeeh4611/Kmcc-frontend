@@ -1,43 +1,292 @@
-// app/admin/members/[id]/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AdminNav } from "@/components/AdminNav";
-import { MemberStatusBadge } from "@/components/MemberStatusBadge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Alert } from "@/components/ui/alert";
-import { memberService } from "@/services/memberService";
-import { metaService } from "@/services/metaService";
-import { extractErrorMessage } from "@/lib/apiClient";
-import type { MembershipPlan } from "@/types";
+import axios from "axios";
+
+const AdminNav = () => {
+  return (
+    <nav className="bg-white border-b border-border px-6 py-4">
+      <div className="mx-auto max-w-6xl flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="font-display text-xl font-bold text-foreground">Admin Panel</span>
+        </div>
+        <div className="flex items-center gap-4">
+          <a href="/admin/dashboard" className="text-sm text-muted-foreground hover:text-primary transition-colors">Dashboard</a>
+          <a href="/admin/members" className="text-sm text-primary font-medium">Members</a>
+          <a href="/admin/committee" className="text-sm text-muted-foreground hover:text-primary transition-colors">Committee</a>
+          <a href="/admin/banners" className="text-sm text-muted-foreground hover:text-primary transition-colors">Banners</a>
+        </div>
+      </div>
+    </nav>
+  );
+};
+
+const Card = ({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => {
+  return (
+    <div className={`bg-white rounded-xl border border-border shadow-sm ${className}`}>
+      {children}
+    </div>
+  );
+};
+
+const CardHeader = ({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => {
+  return (
+    <div className={`px-6 py-4 border-b border-border ${className}`}>
+      {children}
+    </div>
+  );
+};
+
+const CardTitle = ({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => {
+  return (
+    <h3 className={`text-lg font-semibold text-foreground ${className}`}>{children}</h3>
+  );
+};
+
+const CardContent = ({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => {
+  return (
+    <div className={`px-6 py-4 ${className}`}>{children}</div>
+  );
+};
+
+const Button = ({
+  children,
+  type = "button",
+  variant = "default",
+  size = "default",
+  disabled = false,
+  className = "",
+  onClick,
+}: {
+  children: React.ReactNode;
+  type?: "button" | "submit" | "reset";
+  variant?: "default" | "outline" | "destructive" | "ghost";
+  size?: "default" | "sm";
+  disabled?: boolean;
+  className?: string;
+  onClick?: () => void;
+}) => {
+  const baseStyles = "inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none";
+  const variantStyles = {
+    default: "bg-primary text-white hover:bg-primary/90 focus:ring-primary/40",
+    outline: "border border-border bg-white text-foreground hover:bg-primary/5 hover:text-primary focus:ring-primary/40",
+    destructive: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500/40",
+    ghost: "text-muted-foreground hover:bg-primary/5 hover:text-primary",
+  };
+  const sizeStyles = {
+    default: "h-10 px-4 py-2 text-sm rounded-lg",
+    sm: "h-8 px-3 py-1 text-xs rounded-lg",
+  };
+
+  return (
+    <button
+      type={type}
+      disabled={disabled}
+      onClick={onClick}
+      className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
+    >
+      {children}
+    </button>
+  );
+};
+
+const Input = ({
+  id,
+  type = "text",
+  placeholder,
+  className = "",
+  required = false,
+  value,
+  onChange,
+  accept,
+}: {
+  id?: string;
+  type?: string;
+  placeholder?: string;
+  className?: string;
+  required?: boolean;
+  value?: string | number;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  accept?: string;
+}) => {
+  return (
+    <input
+      id={id}
+      type={type}
+      placeholder={placeholder}
+      required={required}
+      value={value}
+      onChange={onChange}
+      accept={accept}
+      className={`w-full h-11 rounded-xl border border-border bg-white/80 px-4 py-2 text-sm text-foreground shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary transition-all duration-200 ${className}`}
+    />
+  );
+};
+
+const Label = ({
+  children,
+  htmlFor,
+  className = "",
+}: {
+  children: React.ReactNode;
+  htmlFor?: string;
+  className?: string;
+}) => {
+  return (
+    <label
+      htmlFor={htmlFor}
+      className={`text-sm font-medium text-foreground ${className}`}
+    >
+      {children}
+    </label>
+  );
+};
+
+const Alert = ({
+  children,
+  variant = "default",
+  className = "",
+}: {
+  children: React.ReactNode;
+  variant?: "default" | "destructive";
+  className?: string;
+}) => {
+  const variantStyles = {
+    default: "bg-blue-50 border-blue-200 text-blue-800",
+    destructive: "bg-red-50 border-red-300 text-red-800",
+  };
+
+  return (
+    <div
+      className={`flex items-center gap-3 rounded-xl border p-4 shadow-sm ${variantStyles[variant]} ${className}`}
+    >
+      {children}
+    </div>
+  );
+};
+
+const MemberStatusBadge = ({ status }: { status: string }) => {
+  const styles: Record<string, string> = {
+    active: "bg-green-100 text-green-700",
+    pending: "bg-amber-100 text-amber-700",
+    suspended: "bg-red-100 text-red-700",
+    expired: "bg-gray-100 text-gray-700",
+  };
+
+  return (
+    <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${styles[status] || styles.expired}`}>
+      {status.charAt(0).toUpperCase() + status.slice(1)}
+    </span>
+  );
+};
 
 const selectClass =
   "flex h-11 w-full rounded-xl border border-border bg-white/80 px-4 py-2 text-sm text-foreground shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary transition-all duration-200";
 
-const FAMILY_RELATIONS = ["spouse", "son", "daughter", "father", "mother", "sibling", "other"];
+interface MembershipPlan {
+  _id: string;
+  title: string;
+  duration: number;
+  price: number;
+}
 
-const colors = {
-  primary: "#2D6A4F",
-  primaryDark: "#1B4332",
-  primaryLight: "#D8EDE6",
-  primarySoft: "#E8F5F0",
-  text: "#1F1B16",
-  muted: "#6B6459",
-  border: "#E7E2D8",
-  surface: "#FFFFFF",
-  bg: "#F5F3EE",
-  greenBg: "#D8EDE6",
-  greenText: "#1B4332",
-  amberBg: "#FDF3D8",
-  amberText: "#9A6B00",
-  redBg: "#FBE2E2",
-  redText: "#B02A2A",
+const memberService = {
+  getById: async (id: string) => {
+    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/admin/members/${id}`);
+    return response.data;
+  },
+  update: async (id: string, formData: FormData) => {
+    const response = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/admin/members/${id}`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data;
+  },
+  listFamily: async (id: string) => {
+    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/admin/members/${id}/family`);
+    return response.data;
+  },
+  addFamily: async (id: string, formData: FormData) => {
+    const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/admin/members/${id}/family`, formData);
+    return response.data;
+  },
+  removeFamily: async (memberId: string, familyId: string) => {
+    const response = await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/admin/members/${memberId}/family/${familyId}`);
+    return response.data;
+  },
+  approve: async (id: string, data: { membershipType: string; committeeRole: string; unit: string }) => {
+    const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/admin/members/${id}/approve`, data);
+    return response.data;
+  },
+  reject: async (id: string) => {
+    const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/admin/members/${id}/reject`);
+    return response.data;
+  },
+  suspend: async (id: string) => {
+    const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/admin/members/${id}/suspend`);
+    return response.data;
+  },
+  reactivate: async (id: string) => {
+    const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/admin/members/${id}/reactivate`);
+    return response.data;
+  },
+  resetPassword: async (id: string) => {
+    const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/admin/members/${id}/reset-password`);
+    return response.data;
+  },
+  renew: async (id: string, data: { membershipType: string }) => {
+    const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/admin/members/${id}/renew`, data);
+    return response.data;
+  },
+  remove: async (id: string) => {
+    const response = await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/admin/members/${id}`);
+    return response.data;
+  },
+  downloadCard: (id: string, membershipId: string) => {
+    window.open(`${process.env.NEXT_PUBLIC_API_URL}/admin/members/${id}/card`, "_blank");
+  },
 };
+
+const metaService = {
+  listMembershipPlans: async () => {
+    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/public/meta/plans`);
+    return response.data;
+  },
+};
+
+const extractErrorMessage = (error: any): string => {
+  if (error.response?.data?.message) return error.response.data.message;
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  return "An unexpected error occurred. Please try again.";
+};
+
+const FAMILY_RELATIONS = ["spouse", "son", "daughter", "father", "mother", "sibling", "other"];
 
 export default function MemberDetailPage() {
   const params = useParams();
@@ -55,7 +304,11 @@ export default function MemberDetailPage() {
     enabled: !!id,
   });
 
-  const { data: plans } = useQuery({ queryKey: ["meta", "plans"], queryFn: metaService.listMembershipPlans });
+  const { data: plans } = useQuery({
+    queryKey: ["meta", "plans"],
+    queryFn: metaService.listMembershipPlans,
+  });
+
   const { data: familyMembers } = useQuery({
     queryKey: ["members", "family", id],
     queryFn: () => memberService.listFamily(id),
@@ -64,6 +317,7 @@ export default function MemberDetailPage() {
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["members"] });
+    queryClient.invalidateQueries({ queryKey: ["members", "detail", id] });
   };
 
   const withHandlers = <T,>(mutationFn: () => Promise<T>, successMsg: string) =>
@@ -173,7 +427,6 @@ export default function MemberDetailPage() {
                       setIsEditing(false);
                       setNotice("Member updated successfully");
                       invalidate();
-                      queryClient.invalidateQueries({ queryKey: ["members", "detail", id] });
                     }}
                     onError={setError}
                   />
@@ -203,26 +456,35 @@ function ProfileView({
     ["Email", member.email],
     ["Gender", member.gender],
     ["Blood Group", member.bloodGroup],
+    ["Date of Birth", member.dob ? new Date(member.dob).toLocaleDateString() : null],
+    ["Birth Year", member.birthYear],
     ["Father's Name", member.fatherName],
     ["Mother's Name", member.motherName],
+    ["House Name", member.houseName],
+    ["Place", member.place],
+    ["Post Office", member.postOffice],
     ["Address", member.address],
     ["District", member.district],
     ["State", member.state],
     ["Country", member.country],
     ["Working Country", member.workingCountry],
+    ["Zone", typeof member.zone === "object" ? member.zone?.name : member.zone],
+    ["Native Place", member.nativePlace],
+    ["Coordinator", typeof member.coordinator === "object" ? member.coordinator?.name : member.coordinator],
     ["Passport Number", member.passportNumber],
     ["Civil ID", member.civilId],
     ["Occupation", member.occupation],
-    ["Native Place", member.nativePlace],
     ["Committee Role", member.committeeRole],
+    ["Panchayath", member.panchayath],
     ["Unit", member.unit],
     [
       "Membership Plan",
-      typeof member.membershipType === "object" && member.membershipType ? member.membershipType.title : "—",
+      typeof member.membershipType === "object" && member.membershipType ? member.membershipType.title : member.membershipType || "—",
     ],
     ["Membership Start", member.membershipStart ? new Date(member.membershipStart).toLocaleDateString() : "—"],
     ["Membership Expiry", member.membershipExpiry ? new Date(member.membershipExpiry).toLocaleDateString() : "—"],
     ["Days Remaining", member.daysRemaining],
+    ["Joined Date", member.joinedDate ? new Date(member.joinedDate).toLocaleDateString() : "—"],
   ];
 
   return (
@@ -258,18 +520,28 @@ function EditMemberForm({
     bloodGroup: initial.bloodGroup || "unknown",
     fatherName: initial.fatherName || "",
     motherName: initial.motherName || "",
+    dob: initial.dob || "",
+    birthYear: initial.birthYear || "",
     address: initial.address || "",
+    houseName: initial.houseName || "",
+    place: initial.place || "",
+    postOffice: initial.postOffice || "",
     district: initial.district || "",
     state: initial.state || "",
     country: initial.country || "",
     workingCountry: initial.workingCountry || "",
+    zone: typeof initial.zone === "string" ? initial.zone : "",
+    nativePlace: initial.nativePlace || "",
+    coordinator: typeof initial.coordinator === "string" ? initial.coordinator : "",
     passportNumber: initial.passportNumber || "",
     civilId: initial.civilId || "",
     occupation: initial.occupation || "",
     committeeRole: initial.committeeRole || "",
+    panchayath: initial.panchayath || "",
     unit: initial.unit || "",
     membershipType:
-      typeof initial.membershipType === "object" && initial.membershipType ? initial.membershipType._id : "",
+      typeof initial.membershipType === "object" && initial.membershipType ? initial.membershipType._id : 
+      typeof initial.membershipType === "string" ? initial.membershipType : "",
   });
   const [photo, setPhoto] = useState<File | null>(null);
 
@@ -336,12 +608,32 @@ function EditMemberForm({
           <Input id="e_photo" type="file" accept="image/*" onChange={(e) => setPhoto(e.target.files?.[0] ?? null)} className="rounded-xl" />
         </div>
         <div className="space-y-1.5">
+          <Label htmlFor="e_dob">Date of Birth</Label>
+          <Input id="e_dob" type="date" value={form.dob} onChange={handleChange("dob")} className="rounded-xl" />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="e_birthYear">Birth Year</Label>
+          <Input id="e_birthYear" type="number" value={form.birthYear} onChange={handleChange("birthYear")} className="rounded-xl" />
+        </div>
+        <div className="space-y-1.5">
           <Label htmlFor="e_fatherName">Father's Name</Label>
           <Input id="e_fatherName" value={form.fatherName} onChange={handleChange("fatherName")} className="rounded-xl" />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="e_motherName">Mother's Name</Label>
           <Input id="e_motherName" value={form.motherName} onChange={handleChange("motherName")} className="rounded-xl" />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="e_houseName">House Name</Label>
+          <Input id="e_houseName" value={form.houseName} onChange={handleChange("houseName")} className="rounded-xl" />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="e_place">Place</Label>
+          <Input id="e_place" value={form.place} onChange={handleChange("place")} className="rounded-xl" />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="e_postOffice">Post Office</Label>
+          <Input id="e_postOffice" value={form.postOffice} onChange={handleChange("postOffice")} className="rounded-xl" />
         </div>
         <div className="space-y-1.5 sm:col-span-2">
           <Label htmlFor="e_address">Address</Label>
@@ -364,6 +656,18 @@ function EditMemberForm({
           <Input id="e_workingCountry" value={form.workingCountry} onChange={handleChange("workingCountry")} className="rounded-xl" />
         </div>
         <div className="space-y-1.5">
+          <Label htmlFor="e_zone">Zone</Label>
+          <Input id="e_zone" value={form.zone} onChange={handleChange("zone")} className="rounded-xl" />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="e_nativePlace">Native Place</Label>
+          <Input id="e_nativePlace" value={form.nativePlace} onChange={handleChange("nativePlace")} className="rounded-xl" />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="e_coordinator">Coordinator</Label>
+          <Input id="e_coordinator" value={form.coordinator} onChange={handleChange("coordinator")} className="rounded-xl" />
+        </div>
+        <div className="space-y-1.5">
           <Label htmlFor="e_passportNumber">Passport Number</Label>
           <Input id="e_passportNumber" value={form.passportNumber} onChange={handleChange("passportNumber")} className="rounded-xl" />
         </div>
@@ -378,6 +682,10 @@ function EditMemberForm({
         <div className="space-y-1.5">
           <Label htmlFor="e_committeeRole">Committee Role</Label>
           <Input id="e_committeeRole" value={form.committeeRole} onChange={handleChange("committeeRole")} className="rounded-xl" />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="e_panchayath">Panchayath</Label>
+          <Input id="e_panchayath" value={form.panchayath} onChange={handleChange("panchayath")} className="rounded-xl" />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="e_unit">Unit</Label>
@@ -700,7 +1008,7 @@ function FamilyMembersCard({
           </div>
         ) : (
           <ul className="divide-y divide-border">
-            {familyMembers.map((fm) => (
+            {familyMembers.map((fm: any) => (
               <li key={fm._id} className="flex items-center justify-between py-3">
                 <div>
                   <span className="font-medium text-foreground">{fm.name}</span>

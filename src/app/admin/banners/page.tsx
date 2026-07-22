@@ -1,11 +1,186 @@
-// app/admin/banners/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
-import { AdminNav } from "@/components/AdminNav";
-import { UploadCloud, Trash2, Image, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import axios from "axios";
+
+const AdminNav = () => {
+  return (
+    <nav className="bg-white border-b border-border px-6 py-4">
+      <div className="mx-auto max-w-6xl flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="font-display text-xl font-bold text-foreground">Admin Panel</span>
+        </div>
+        <div className="flex items-center gap-4">
+          <a href="/admin/dashboard" className="text-sm text-muted-foreground hover:text-primary transition-colors">Dashboard</a>
+          <a href="/admin/committee" className="text-sm text-muted-foreground hover:text-primary transition-colors">Committee</a>
+          <a href="/admin/banners" className="text-sm text-primary font-medium">Banners</a>
+        </div>
+      </div>
+    </nav>
+  );
+};
+
+const Card = ({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => {
+  return (
+    <div className={`bg-white rounded-xl border border-border shadow-sm ${className}`}>
+      {children}
+    </div>
+  );
+};
+
+const CardHeader = ({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => {
+  return (
+    <div className={`px-6 py-4 border-b border-border ${className}`}>
+      {children}
+    </div>
+  );
+};
+
+const CardTitle = ({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => {
+  return (
+    <h3 className={`text-lg font-semibold text-foreground ${className}`}>{children}</h3>
+  );
+};
+
+const CardContent = ({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => {
+  return (
+    <div className={`px-6 py-4 ${className}`}>{children}</div>
+  );
+};
+
+const Button = ({
+  children,
+  type = "button",
+  variant = "default",
+  size = "default",
+  disabled = false,
+  className = "",
+  onClick,
+}: {
+  children: React.ReactNode;
+  type?: "button" | "submit" | "reset";
+  variant?: "default" | "destructive";
+  size?: "default" | "icon";
+  disabled?: boolean;
+  className?: string;
+  onClick?: () => void;
+}) => {
+  const baseStyles = "inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none";
+  const variantStyles = {
+    default: "bg-primary text-white hover:bg-primary/90 focus:ring-primary/40",
+    destructive: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500/40",
+  };
+  const sizeStyles = {
+    default: "h-10 px-4 py-2 text-sm rounded-lg",
+    icon: "h-8 w-8 rounded-xl",
+  };
+
+  return (
+    <button
+      type={type}
+      disabled={disabled}
+      onClick={onClick}
+      className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
+    >
+      {children}
+    </button>
+  );
+};
+
+const UploadCloud = ({ className = "", size = 32 }) => (
+  <svg
+    stroke="currentColor"
+    fill="none"
+    strokeWidth="2"
+    viewBox="0 0 24 24"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    height={size}
+    width={size}
+    className={className}
+  >
+    <path d="M16 16l-4-4-4 4"></path>
+    <path d="M12 12v9"></path>
+    <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path>
+    <polyline points="16 16 12 12 8 16"></polyline>
+  </svg>
+);
+
+const Trash2 = ({ className = "", size = 16 }) => (
+  <svg
+    stroke="currentColor"
+    fill="none"
+    strokeWidth="2"
+    viewBox="0 0 24 24"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    height={size}
+    width={size}
+    className={className}
+  >
+    <polyline points="3 6 5 6 21 6"></polyline>
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+  </svg>
+);
+
+const Image = ({ className = "", size = 48 }) => (
+  <svg
+    stroke="currentColor"
+    fill="none"
+    strokeWidth="2"
+    viewBox="0 0 24 24"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    height={size}
+    width={size}
+    className={className}
+  >
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+    <polyline points="21 15 16 10 5 21"></polyline>
+  </svg>
+);
+
+const Plus = ({ className = "", size = 16 }) => (
+  <svg
+    stroke="currentColor"
+    fill="none"
+    strokeWidth="2"
+    viewBox="0 0 24 24"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    height={size}
+    width={size}
+    className={className}
+  >
+    <line x1="12" y1="5" x2="12" y2="19"></line>
+    <line x1="5" y1="12" x2="19" y2="12"></line>
+  </svg>
+);
 
 type BannerImage = {
   id: string;
@@ -23,10 +198,14 @@ export default function AdminBannersPage() {
 
   const load = async () => {
     setLoading(true);
-    const res = await fetch("/api/banners", { cache: "no-store" });
-    const data = await res.json();
-    setBanners(data.banners ?? []);
-    setLoading(false);
+    try {
+      const res = await axios.get("/api/banners");
+      setBanners(res.data.banners ?? []);
+    } catch (error) {
+      console.error("Failed to load banners:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -36,20 +215,31 @@ export default function AdminBannersPage() {
   const handleUpload = async () => {
     if (!file) return;
     setUploading(true);
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("alt", alt || "Hero banner");
-    await fetch("/api/banners", { method: "POST", body: formData });
-    setFile(null);
-    setAlt("");
-    setUploading(false);
-    load();
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("alt", alt || "Hero banner");
+      await axios.post("/api/banners", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setFile(null);
+      setAlt("");
+      await load();
+    } catch (error) {
+      console.error("Upload failed:", error);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this banner?")) return;
-    await fetch(`/api/banners/${id}`, { method: "DELETE" });
-    load();
+    try {
+      await axios.delete(`/api/banners/${id}`);
+      await load();
+    } catch (error) {
+      console.error("Delete failed:", error);
+    }
   };
 
   return (

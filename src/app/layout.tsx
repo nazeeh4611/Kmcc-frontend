@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Fraunces, Inter, Space_Grotesk } from "next/font/google";
+declare module "./globals.css"; 
 import "./globals.css";
 import Providers from "./providers";
 

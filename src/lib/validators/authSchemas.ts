@@ -1,57 +1,44 @@
 import { z } from "zod";
 
-export const adminLoginSchema = z.object({
-  email: z.string().trim().email("Enter a valid email"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-});
-export type AdminLoginInput = z.infer<typeof adminLoginSchema>;
+const NOT_IN_LIST = "__not_in_list__";
 
-export const memberLoginSchema = z.object({
-  membershipId: z.string().trim().min(3, "Membership ID is required"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-});
-export type MemberLoginInput = z.infer<typeof memberLoginSchema>;
+// Custom regex for your ID format
+const ZONE_ID_REGEX = /^zone_\d+$/;
+const COORDINATOR_ID_REGEX = /^coord_\d+_\d+$/;
 
 export const registerMemberSchema = z
   .object({
-    zone: z.string().optional(),
-    zoneOther: z.string().trim().max(150).optional(),
-    nativePlace: z.string().trim().min(1, "Native place is required"),
+    photo: z
+      .instanceof(File, { message: "Photo is required." })
+      .refine((file) => file.size > 0, { message: "Photo is required." }),
+    zone: z.string().min(1, "Please select your zone."),
+    zoneOther: z.string().optional(),
+    nativePlace: z.string().min(1, "Native place is required."),
     coordinator: z.string().optional(),
-    coordinatorOther: z.string().trim().max(150).optional(),
-    workingCountry: z.string().trim().min(1, "Working country is required"),
-    mandalamCommittee: z.string().trim().optional(),
-    fullName: z.string().trim().min(2, "Name is required"),
-    phone: z
+    coordinatorOther: z.string().optional(),
+    workingCountry: z.string().min(1, "Working country is required."),
+    mandalamCommittee: z.string().optional(),
+    fullName: z.string().min(1, "Name is required."),
+    fatherName: z.string().min(1, "Father's name is required."),
+    address: z.string().min(1, "Address is required."),
+    bloodGroup: z.string().min(1, "Please select your blood group."),
+    phone: z.string().min(7, "Enter a valid mobile number."),
+    email: z.string().email("Enter a valid email.").optional().or(z.literal("")),
+    birthYear: z
       .string()
-      .trim()
-      .regex(/^\+?[0-9\s\-()]{7,20}$/, "Enter a valid mobile number with country code"),
-    email: z.string().trim().email("Enter a valid email").optional().or(z.literal("")),
-    birthYear: z.coerce
-      .number()
-      .int()
-      .min(1900, "Enter a valid 4-digit year")
-      .max(new Date().getFullYear(), "Enter a valid 4-digit year"),
-    photo: z.instanceof(File).optional(),
+      .length(4, "Enter a 4-digit birth year.")
+      .refine(
+        (val) => Number(val) >= 1900 && Number(val) <= new Date().getFullYear(),
+        { message: "Enter a valid birth year." }
+      ),
   })
-  .refine((data) => data.zone || data.zoneOther, {
-    message: "Select a Panchayath/Zone or specify one",
-    path: ["zone"],
-  })
-  .refine((data) => data.coordinator || data.coordinatorOther, {
-    message: "Select a coordinator or choose Not in List",
-    path: ["coordinator"],
+  .superRefine((data, ctx) => {
+    if (data.zone === NOT_IN_LIST && !data.zoneOther) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["zoneOther"], message: "Please enter your zone." });
+    }
+    if ((data.coordinator === NOT_IN_LIST || data.zone === NOT_IN_LIST) && !data.coordinatorOther) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["coordinatorOther"], message: "Please enter your coordinator name." });
+    }
   });
-export type RegisterMemberInput = z.infer<typeof registerMemberSchema>;
 
-export const changePasswordSchema = z
-  .object({
-    currentPassword: z.string().min(6),
-    newPassword: z.string().min(6, "New password must be at least 6 characters"),
-    confirmPassword: z.string().min(6),
-  })
-  .refine((data) => data.newPassword === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
-export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+export type RegisterMemberInput = z.infer<typeof registerMemberSchema>;

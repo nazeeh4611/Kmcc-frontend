@@ -15,16 +15,16 @@ const points = [
 
 export default function About() {
   return (
-    <section id="about" className="bg-ivory py-24">
+    <section id="about" className="bg-paper py-24">
       <div className="mx-auto grid max-w-7xl gap-16 px-6 lg:grid-cols-2 lg:items-center">
         <div className="order-2 lg:order-1">
           <span className="font-utility text-xs font-semibold uppercase tracking-[0.18em] text-maroon">
             About the chapter
           </span>
-          <h2 className="mt-4 font-display text-3xl font-bold leading-tight text-teak sm:text-4xl">
+          <h2 className="mt-4 font-display text-3xl font-bold leading-tight text-ink sm:text-4xl">
             One panchayath, spread across the world, still one family
           </h2>
-          <p className="mt-6 font-body leading-relaxed text-teak/70">
+          <p className="mt-6 font-body leading-relaxed text-slate">
             Global KMCC Anganganadi Panchayath was formed so that no one who leaves home for work
             has to lose their connection to it. We organise the community abroad into local
             committees, run welfare programmes for families back in Kerala, and keep everyone
@@ -34,12 +34,12 @@ export default function About() {
           <ul className="mt-10 space-y-6">
             {points.map((point, index) => (
               <li key={point.title} className="flex gap-4">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-maroon/10 font-display text-sm font-bold text-maroon">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-maroon-100 font-display text-sm font-bold text-maroon">
                   {String(index + 1).padStart(2, "0")}
                 </span>
                 <div>
-                  <h3 className="font-display text-lg font-semibold text-teak">{point.title}</h3>
-                  <p className="mt-1 font-body text-sm leading-relaxed text-teak/60">{point.body}</p>
+                  <h3 className="font-display text-lg font-semibold text-ink">{point.title}</h3>
+                  <p className="mt-1 font-body text-sm leading-relaxed text-slate">{point.body}</p>
                 </div>
               </li>
             ))}
@@ -47,7 +47,7 @@ export default function About() {
         </div>
 
         <div className="order-1 lg:order-2">
-          <div className="relative overflow-hidden rounded-[2rem] bg-palm p-10">
+          <div className="relative overflow-hidden rounded-[2rem] bg-green-900 p-10">
             <div
               aria-hidden="true"
               className="absolute inset-0 opacity-20"
