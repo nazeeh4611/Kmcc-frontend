@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Menu, X, Stamp } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 const links = [
   { label: "Home", href: "/" },
@@ -31,17 +32,24 @@ export default function Navbar() {
         scrolled ? "glass border-b border-line shadow-sm" : "border-b border-transparent bg-paper/60"
       )}
     >
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-green text-brass">
-            <Stamp className="h-4 w-4 stroke-[1.8]" />
-          </span>
-          <span className="font-display text-lg font-semibold tracking-tight text-green-900">
-            Global KMCC
-            <span className="ml-2 hidden font-utility text-[10px] font-medium uppercase tracking-[0.22em] text-brass-600 sm:inline">
+      <div className="mx-auto flex h-24 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <Link href="/" className="flex items-center gap-3">
+          <div className="relative h-[72px] w-[72px] overflow-hidden">
+            <Image
+              src="/kmcc.avif"
+              alt="Global KMCC Logo"
+              fill
+              className="object-cover"
+            />
+          </div>
+          <div className="flex flex-col leading-tight">
+            <span className="font-display text-3xl font-semibold tracking-tight text-green-900">
+              Global KMCC
+            </span>
+            <span className="font-utility text-[11px] font-medium uppercase tracking-[0.22em] text-brass-600">
               Anganganadi Panchayath
             </span>
-          </span>
+          </div>
         </Link>
 
         <nav className="hidden lg:flex lg:items-center lg:gap-8">

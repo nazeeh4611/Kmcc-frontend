@@ -5,10 +5,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { authService } from "@/services/authService";
+import { extractErrorMessage } from "@/lib/apiClient";
 
 const memberLoginSchema = z.object({
   membershipId: z.string().min(1, "Membership ID is required"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: z.string().regex(/^\d{4}$/, "Password must be exactly 4 digits"),
 });
 
 type MemberLoginInput = z.infer<typeof memberLoginSchema>;
@@ -189,41 +191,6 @@ const CardContent = ({
   return (
     <div className={`relative px-8 pb-8 pt-6 ${className}`}>{children}</div>
   );
-};
-
-const useMemberLogin = () => {
-  const [isPending, setIsPending] = useState(false);
-  const [data, setData] = useState(null);
-  const [error, setError] = useState(null);
-
-  const mutateAsync = async (values: MemberLoginInput) => {
-    setIsPending(true);
-    setError(null);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log("Login values:", values);
-      setData({ success: true });
-      return { success: true };
-    } catch (err) {
-      setError(err);
-      throw err;
-    } finally {
-      setIsPending(false);
-    }
-  };
-
-  return {
-    mutateAsync,
-    isPending,
-    data,
-    error,
-  };
-};
-
-const extractErrorMessage = (error: any): string => {
-  if (error instanceof Error) return error.message;
-  if (typeof error === "string") return error;
-  return "An unexpected error occurred. Please try again.";
 };
 
 const FiHash = ({ size = 20, className = "" }) => (
@@ -451,12 +418,10 @@ export function MemberLoginForm() {
     },
   });
 
-  const memberLogin = useMemberLogin();
-
   const onSubmit = async (values: MemberLoginInput) => {
     setServerError(null);
     try {
-      await memberLogin.mutateAsync(values);
+      await authService.memberLogin(values);
       const redirect = searchParams.get("redirect") || "/dashboard";
       router.push(redirect);
     } catch (error) {
@@ -495,66 +460,9 @@ export function MemberLoginForm() {
                   and stay connected with our global community.
                 </p>
 
-                <div className="mt-12 grid grid-cols-2 gap-4">
-                  <div className="group rounded-2xl border border-green/20 bg-white/80 backdrop-blur-sm p-5 transition-all duration-300 hover:border-green/30 hover:shadow-lg hover:shadow-green/5">
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-green/10 to-green/5 text-green transition-all duration-300 group-hover:scale-110">
-                        <FiUsers size={22} />
-                      </div>
-                      <div>
-                        <p className="font-body text-lg font-bold text-ink">5,000+</p>
-                        <p className="font-body text-sm text-slate/70">Active Members</p>
-                      </div>
-                    </div>
-                  </div>
+             
 
-                  <div className="group rounded-2xl border border-brass/20 bg-white/80 backdrop-blur-sm p-5 transition-all duration-300 hover:border-brass/30 hover:shadow-lg hover:shadow-brass/5">
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-brass/10 to-brass/5 text-brass transition-all duration-300 group-hover:scale-110">
-                        <FiAward size={22} />
-                      </div>
-                      <div>
-                        <p className="font-body text-lg font-bold text-ink">50K+</p>
-                        <p className="font-body text-sm text-slate/70">Service Hours</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="group rounded-2xl border border-green/20 bg-white/80 backdrop-blur-sm p-5 transition-all duration-300 hover:border-green/30 hover:shadow-lg hover:shadow-green/5">
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-green/10 to-green/5 text-green transition-all duration-300 group-hover:scale-110">
-                        <FiGlobe size={22} />
-                      </div>
-                      <div>
-                        <p className="font-body text-lg font-bold text-ink">150+</p>
-                        <p className="font-body text-sm text-slate/70">Branches</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="group rounded-2xl border border-brass/20 bg-white/80 backdrop-blur-sm p-5 transition-all duration-300 hover:border-brass/30 hover:shadow-lg hover:shadow-brass/5">
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-brass/10 to-brass/5 text-brass transition-all duration-300 group-hover:scale-110">
-                        <FiHeart size={22} />
-                      </div>
-                      <div>
-                        <p className="font-body text-lg font-bold text-ink">10K+</p>
-                        <p className="font-body text-sm text-slate/70">Lives Impacted</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-8 flex items-center gap-6">
-                  <div className="flex items-center gap-3">
-                    <div className="flex -space-x-3">
-                      <div className="h-10 w-10 rounded-full border-2 border-white bg-gradient-to-br from-green to-green-700 shadow-sm"></div>
-                      <div className="h-10 w-10 rounded-full border-2 border-white bg-gradient-to-br from-brass to-brass-dark shadow-sm"></div>
-                      <div className="h-10 w-10 rounded-full border-2 border-white bg-gradient-to-br from-green to-brass shadow-sm"></div>
-                    </div>
-                    <span className="font-body text-sm font-medium text-ink">Join 5,000+ members</span>
-                  </div>
-                </div>
+              
               </div>
             </div>
           </div>
@@ -599,7 +507,7 @@ export function MemberLoginForm() {
                         id="membershipId"
                         type="text"
                         autoComplete="username"
-                        placeholder="GKAP-2026-000123"
+                        placeholder="1001"
                         className="h-14 pl-12"
                         {...register("membershipId")}
                       />
@@ -630,7 +538,9 @@ export function MemberLoginForm() {
                         id="password"
                         type={showPassword ? "text" : "password"}
                         autoComplete="current-password"
-                        placeholder="••••••••"
+                        inputMode="numeric"
+                        maxLength={4}
+                        placeholder="••••"
                         className="h-14 pl-12 pr-12"
                         {...register("password")}
                       />
@@ -658,11 +568,11 @@ export function MemberLoginForm() {
                   <Button
                     type="submit"
                     size="lg"
-                    disabled={isSubmitting || memberLogin.isPending}
+                    disabled={isSubmitting}
                     className="group relative h-14 w-full overflow-hidden rounded-xl bg-gradient-to-r from-green to-brass font-body text-base font-semibold text-white shadow-lg shadow-green/25 transition-all duration-300 hover:shadow-xl hover:shadow-green/30 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:hover:scale-100"
                   >
                     <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></span>
-                    {isSubmitting || memberLogin.isPending ? (
+                    {isSubmitting ? (
                       <>
                         <span className="mr-3 h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
                         Signing in...

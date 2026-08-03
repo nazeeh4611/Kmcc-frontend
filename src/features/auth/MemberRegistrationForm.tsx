@@ -407,7 +407,7 @@ export function MemberRegistrationForm() {
       formData.append("birthYear", String(values.birthYear || ""));
 
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/public/members/register`,
+        `${process.env.NEXT_PUBLIC_API_URL}/members/public/register`,
         formData,
         {
           headers: {

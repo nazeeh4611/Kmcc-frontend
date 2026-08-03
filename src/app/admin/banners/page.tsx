@@ -1,24 +1,9 @@
+// AdminBannersPage.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
-
-const AdminNav = () => {
-  return (
-    <nav className="bg-white border-b border-border px-6 py-4">
-      <div className="mx-auto max-w-6xl flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="font-display text-xl font-bold text-foreground">Admin Panel</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <a href="/admin/dashboard" className="text-sm text-muted-foreground hover:text-primary transition-colors">Dashboard</a>
-          <a href="/admin/committee" className="text-sm text-muted-foreground hover:text-primary transition-colors">Committee</a>
-          <a href="/admin/banners" className="text-sm text-primary font-medium">Banners</a>
-        </div>
-      </div>
-    </nav>
-  );
-};
+import { AdminNav } from "@/components/AdminNav";
 
 const Card = ({
   children,

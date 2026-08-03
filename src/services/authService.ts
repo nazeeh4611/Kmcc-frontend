@@ -1,5 +1,5 @@
-import axios from "axios";
 import { apiClient, type ApiEnvelope } from "@/lib/apiClient";
+import { tokenStorage } from "@/lib/tokenStorage";
 import type { Admin, AuthSession, Member, SessionType } from "@/types";
 import type {
   AdminLoginInput,
@@ -7,68 +7,50 @@ import type {
   ChangePasswordInput,
 } from "@/lib/validators/authSchemas";
 
-console.log("AUTH SERVICE FILE LOADED");
+interface LoginTokens {
+  token: string;
+  refreshToken?: string;
+}
+
 export const authService = {
-  
-  adminLogin: async (payload: AdminLoginInput) => {
-    try {
-      console.log("Sending request...", payload);
+  adminLogin: async (payload: AdminLoginInput): Promise<Admin> => {
+    const { data } = await apiClient.post<
+      ApiEnvelope<{ admin: Admin } & LoginTokens>
+    >("/auth/admin/login", payload);
 
-      const response = await apiClient.post<ApiEnvelope<{ admin: Admin }>>(
-        "/auth/admin/login",
-        payload
-      );
+    const { admin, token, refreshToken } = data.data;
 
-      console.log("SUCCESS:", response);
+    tokenStorage.setTokens(token, refreshToken);
 
-      return response.data.data.admin;
-    } catch (err) {
-      console.error("FULL ERROR:", err);
-
-      if (axios.isAxiosError(err)) {
-        console.log("Message:", err.message);
-        console.log("Code:", err.code);
-        console.log("Status:", err.response?.status);
-        console.log("Response:", err.response?.data);
-        console.log("Request:", err.request);
-        console.log("Config:", err.config);
-      }
-
-      throw err;
-    }
+    return admin;
   },
 
-  memberLogin: async (payload: MemberLoginInput) => {
-    try {
-      const response = await apiClient.post<ApiEnvelope<{ member: Member }>>(
-        "/auth/member/login",
-        payload
-      );
+  memberLogin: async (payload: MemberLoginInput): Promise<Member> => {
+    const { data } = await apiClient.post<
+      ApiEnvelope<{ member: Member } & LoginTokens>
+    >("/auth/member/login", payload);
 
-      return response.data.data.member;
-    } catch (err) {
-      console.error("FULL ERROR:", err);
+    const { member, token, refreshToken } = data.data;
 
-      if (axios.isAxiosError(err)) {
-        console.log("Message:", err.message);
-        console.log("Code:", err.code);
-        console.log("Status:", err.response?.status);
-        console.log("Response:", err.response?.data);
-        console.log("Request:", err.request);
-        console.log("Config:", err.config);
-      }
+    tokenStorage.setTokens(token, refreshToken);
 
-      throw err;
-    }
+    return member;
   },
 
-  logout: async () => {
-    await apiClient.post("/auth/logout");
+  logout: async (): Promise<void> => {
+    try {
+      await apiClient.post("/auth/logout");
+    } finally {
+      tokenStorage.clearTokens();
+    }
   },
 
   getSession: async (): Promise<AuthSession> => {
     const { data } = await apiClient.get<
-      ApiEnvelope<{ user: Admin | Member; type: SessionType }>
+      ApiEnvelope<{
+        user: Admin | Member;
+        type: SessionType;
+      }>
     >("/auth/me");
 
     return {
@@ -77,7 +59,9 @@ export const authService = {
     };
   },
 
-  changePassword: async (payload: ChangePasswordInput) => {
+  changePassword: async (
+    payload: ChangePasswordInput
+  ): Promise<string> => {
     const { data } = await apiClient.post<ApiEnvelope<null>>(
       "/auth/change-password",
       payload
@@ -86,10 +70,12 @@ export const authService = {
     return data.message;
   },
 
-  forgotPassword: async (email: string) => {
+  forgotPassword: async (email: string): Promise<string> => {
     const { data } = await apiClient.post<ApiEnvelope<null>>(
       "/auth/forgot-password",
-      { email }
+      {
+        email,
+      }
     );
 
     return data.message;
@@ -99,12 +85,48 @@ export const authService = {
     token: string;
     newPassword: string;
     confirmPassword: string;
-  }) => {
+  }): Promise<string> => {
     const { data } = await apiClient.post<ApiEnvelope<null>>(
       "/auth/reset-password",
       payload
     );
 
     return data.message;
+  },
+
+  getMyMembershipDetails: async (): Promise<Member> => {
+    const { data } = await apiClient.get<ApiEnvelope<{ member: Member }>>(
+      "/members/me"
+    );
+
+    return data.data.member;
+  },
+
+  downloadMembershipCard: async (): Promise<void> => {
+    const response = await apiClient.get("/members/me/card", {
+      responseType: "blob",
+    });
+
+    const blob = new Blob([response.data], {
+      type: "application/pdf",
+    });
+
+    const url = window.URL.createObjectURL(blob);
+
+    const disposition = response.headers["content-disposition"] as
+      | string
+      | undefined;
+
+    const match = disposition?.match(/filename="?([^"]+)"?/);
+    const filename = match?.[1] ?? "membership-card.pdf";
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    window.URL.revokeObjectURL(url);
   },
 };

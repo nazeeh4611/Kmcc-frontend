@@ -1,10 +1,11 @@
 import { Stamp, Globe2 } from "lucide-react";
-import { heroStats } from "../lib/PlaceholderData";
+import Image from "next/image";
 
 export default function AboutMission() {
   return (
     <section className="bg-white px-4 py-20 sm:px-6 lg:px-8">
       <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-16">
+        {/* Left side - Content */}
         <div>
           <span className="font-utility text-[11px] font-semibold uppercase tracking-[0.25em] text-green">
             Who We Are
@@ -42,27 +43,17 @@ export default function AboutMission() {
           </div>
         </div>
 
-        <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-green-900 bg-green-900 p-10 text-center shadow-card-lg">
-          <span className="flex h-16 w-16 items-center justify-center rounded-xl border border-brass text-brass">
-            <Stamp className="h-7 w-7" strokeWidth={1.6} />
-          </span>
-          <p className="mt-2 font-display text-xl font-semibold text-paper">Global KMCC</p>
-          <p className="font-utility text-xs uppercase tracking-[0.3em] text-brass">
-            Anganganadi Constituency
-          </p>
-          <p className="mt-2 max-w-xs font-body text-sm italic text-paper/60">
-            The greatest honor for a KMCC volunteer is the grateful prayer of a life lifted from hardship.
-          </p>
-
-          <div className="mt-6 grid w-full grid-cols-3 gap-3 border-t border-white/10 pt-6">
-            {heroStats.map((stat) => (
-              <div key={stat.label}>
-                <p className="font-display text-lg font-bold text-brass">{stat.value}</p>
-                <p className="mt-1 font-body text-[11px] text-paper/60">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* Right side - Logo only */}
+       <div className="flex items-center justify-center">
+  <div className="relative h-[350px] w-[350px] md:h-[500px] md:w-[500px] lg:h-[600px] lg:w-[600px]">
+    <Image
+      src="/kmcc.avif"
+      alt="Global KMCC Logo"
+      fill
+      className="object-contain"
+    />
+  </div>
+</div>
       </div>
     </section>
   );

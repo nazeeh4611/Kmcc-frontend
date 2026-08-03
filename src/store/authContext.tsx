@@ -11,7 +11,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   logout: () => void;
   isLoggingOut: boolean;
-  refetchSession: () => void;
+  refetchSession: () => Promise<unknown>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -30,7 +30,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     queryFn: authService.getSession,
     retry: false,
     staleTime: 5 * 60 * 1000,
-    // Session lookup fails silently (401) when logged out — that's expected, not an error state.
     throwOnError: false,
   });
 
@@ -42,8 +41,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     },
   });
 
-  // The API client dispatches this when a refresh attempt fails mid-session
-  // (e.g. refresh token expired/invalidated) so the UI can react immediately.
   useEffect(() => {
     const handleExpired = () => {
       queryClient.setQueryData(SESSION_QUERY_KEY, null);

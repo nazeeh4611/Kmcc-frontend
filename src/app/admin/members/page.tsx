@@ -4,24 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-
-const AdminNav = () => {
-  return (
-    <nav className="bg-white border-b border-border px-6 py-4">
-      <div className="mx-auto max-w-6xl flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="font-display text-xl font-bold text-foreground">Admin Panel</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <a href="/admin/dashboard" className="text-sm text-muted-foreground hover:text-primary transition-colors">Dashboard</a>
-          <a href="/admin/members" className="text-sm text-primary font-medium">Members</a>
-          <a href="/admin/committee" className="text-sm text-muted-foreground hover:text-primary transition-colors">Committee</a>
-          <a href="/admin/banners" className="text-sm text-muted-foreground hover:text-primary transition-colors">Banners</a>
-        </div>
-      </div>
-    </nav>
-  );
-};
+import { AdminNav } from "@/components/AdminNav";
+import { apiClient } from "@/lib/apiClient";
 
 const Card = ({
   children,
@@ -293,8 +277,8 @@ const STATUS_TABS: { label: string; value: MembershipStatus | ""; icon: any }[] 
 
 const memberService = {
   stats: async () => {
-    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/admin/members/stats`);
-    return response.data;
+    const response = await apiClient.get("/members/stats");
+    return response.data.data ?? response.data;
   },
   list: async ({ page, limit, search, status }: { page: number; limit: number; search?: string; status?: string }) => {
     const params = new URLSearchParams();
@@ -302,8 +286,8 @@ const memberService = {
     params.append("limit", String(limit));
     if (search) params.append("search", search);
     if (status) params.append("status", status);
-    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/admin/members?${params}`);
-    return response.data;
+    const response = await apiClient.get(`/members?${params}`);
+    return response.data.data ?? response.data;
   },
   exportExcel: async (status?: string) => {
     const url = status
@@ -312,6 +296,7 @@ const memberService = {
     window.open(url, "_blank");
   },
 };
+
 
 export default function AdminMembersPage() {
   const [search, setSearch] = useState("");

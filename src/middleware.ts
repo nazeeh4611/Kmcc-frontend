@@ -6,17 +6,7 @@ const ADMIN_LOGIN_PATH = "/admin/login";
 const MEMBER_LOGIN_PATH = "/login";
 
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  const hasAccessToken = request.cookies.has("accessToken");
 
-  const isAdminRoute = pathname.startsWith(ADMIN_PREFIX) && pathname !== ADMIN_LOGIN_PATH;
-  const isMemberRoute = pathname.startsWith(MEMBER_PREFIX);
-
-  if ((isAdminRoute || isMemberRoute) && !hasAccessToken) {
-    const loginUrl = new URL(isAdminRoute ? ADMIN_LOGIN_PATH : MEMBER_LOGIN_PATH, request.url);
-    loginUrl.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(loginUrl);
-  }
 
   // Note: this only checks for the cookie's presence, not its validity or
   // which account type it belongs to — the access token is short-lived and
@@ -28,5 +18,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/dashboard/:path*"],
+  matcher: [],
 };

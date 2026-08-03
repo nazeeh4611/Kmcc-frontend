@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
+import { apiClient } from "@/lib/apiClient";
 
 const AdminNav = () => {
   return (
@@ -216,66 +216,65 @@ interface MembershipPlan {
   price: number;
 }
 
+const FALLBACK_PLANS: MembershipPlan[] = [
+  { _id: "fallback-1yr", title: "1 Year", duration: 12, price: 500 },
+  { _id: "fallback-3yr", title: "3 Years", duration: 36, price: 1200 },
+  { _id: "fallback-5yr", title: "5 Years", duration: 60, price: 2000 },
+];
+
 const memberService = {
   getById: async (id: string) => {
-    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/admin/members/${id}`);
-    return response.data;
+    const response = await apiClient.get(`/members/${id}`);
+    return response.data.data.member;
   },
   update: async (id: string, formData: FormData) => {
-    const response = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/admin/members/${id}`, formData, {
+    const response = await apiClient.patch(`/members/${id}`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
-    return response.data;
+    return response.data.data.member;
   },
-  listFamily: async (id: string) => {
-    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/admin/members/${id}/family`);
-    return response.data;
-  },
-  addFamily: async (id: string, formData: FormData) => {
-    const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/admin/members/${id}/family`, formData);
-    return response.data;
-  },
-  removeFamily: async (memberId: string, familyId: string) => {
-    const response = await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/admin/members/${memberId}/family/${familyId}`);
-    return response.data;
-  },
-  approve: async (id: string, data: { membershipType: string; committeeRole: string; unit: string }) => {
-    const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/admin/members/${id}/approve`, data);
-    return response.data;
+  approve: async (id: string, data: { membershipType: string; committeeRole: string }) => {
+    const response = await apiClient.post(`/members/${id}/approve`, data);
+    return response.data.data;
   },
   reject: async (id: string) => {
-    const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/admin/members/${id}/reject`);
+    const response = await apiClient.post(`/members/${id}/reject`);
     return response.data;
   },
   suspend: async (id: string) => {
-    const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/admin/members/${id}/suspend`);
-    return response.data;
+    const response = await apiClient.post(`/members/${id}/suspend`);
+    return response.data.data.member;
   },
   reactivate: async (id: string) => {
-    const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/admin/members/${id}/reactivate`);
-    return response.data;
+    const response = await apiClient.post(`/members/${id}/reactivate`);
+    return response.data.data.member;
   },
   resetPassword: async (id: string) => {
-    const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/admin/members/${id}/reset-password`);
-    return response.data;
+    const response = await apiClient.post(`/members/${id}/reset-password`);
+    return response.data.data;
   },
   renew: async (id: string, data: { membershipType: string }) => {
-    const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/admin/members/${id}/renew`, data);
-    return response.data;
+    const response = await apiClient.post(`/members/${id}/renew`, data);
+    return response.data.data.member;
   },
   remove: async (id: string) => {
-    const response = await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/admin/members/${id}`);
+    const response = await apiClient.delete(`/members/${id}`);
     return response.data;
   },
-  downloadCard: (id: string, membershipId: string) => {
-    window.open(`${process.env.NEXT_PUBLIC_API_URL}/admin/members/${id}/card`, "_blank");
+  downloadCard: (id: string) => {
+    window.open(`${process.env.NEXT_PUBLIC_API_URL}/members/${id}/card`, "_blank");
   },
 };
 
 const metaService = {
-  listMembershipPlans: async () => {
-    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/public/meta/plans`);
-    return response.data;
+  listMembershipPlans: async (): Promise<MembershipPlan[]> => {
+    try {
+      const response = await apiClient.get("/membership-plans");
+      const plans = response.data.data?.plans ?? response.data.data ?? [];
+      return Array.isArray(plans) && plans.length > 0 ? plans : FALLBACK_PLANS;
+    } catch {
+      return FALLBACK_PLANS;
+    }
   },
 };
 
@@ -286,7 +285,27 @@ const extractErrorMessage = (error: any): string => {
   return "An unexpected error occurred. Please try again.";
 };
 
-const FAMILY_RELATIONS = ["spouse", "son", "daughter", "father", "mother", "sibling", "other"];
+function PhotoLightbox({ url, alt, onClose }: { url: string; alt: string; onClose: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-6"
+      onClick={onClose}
+    >
+      <button
+        onClick={onClose}
+        className="absolute right-5 top-5 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white text-xl hover:bg-white/20"
+      >
+        ✕
+      </button>
+      <img
+        src={url}
+        alt={alt}
+        onClick={(e) => e.stopPropagation()}
+        className="max-h-full max-w-full rounded-lg object-contain shadow-2xl"
+      />
+    </div>
+  );
+}
 
 export default function MemberDetailPage() {
   const params = useParams();
@@ -307,12 +326,6 @@ export default function MemberDetailPage() {
   const { data: plans } = useQuery({
     queryKey: ["meta", "plans"],
     queryFn: metaService.listMembershipPlans,
-  });
-
-  const { data: familyMembers } = useQuery({
-    queryKey: ["members", "family", id],
-    queryFn: () => memberService.listFamily(id),
-    enabled: !!id && member?.membershipStatus !== "pending",
   });
 
   const invalidate = () => {
@@ -399,15 +412,26 @@ export default function MemberDetailPage() {
         )}
 
         {member.membershipStatus === "pending" ? (
-          <PendingApprovalCard
-            memberId={id}
-            plans={plans ?? []}
-            onDone={(msg) => {
-              setNotice(msg);
-              invalidate();
-            }}
-            onError={setError}
-          />
+          <>
+            <Card className="mb-6 overflow-hidden border-border shadow-sm">
+              <CardHeader className="border-b border-border bg-primary/5">
+                <CardTitle className="text-foreground">Applicant Details</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <ProfileView member={member} />
+              </CardContent>
+            </Card>
+
+            <PendingApprovalCard
+              memberId={id}
+              plans={plans ?? []}
+              onDone={(msg) => {
+                setNotice(msg);
+                invalidate();
+              }}
+              onError={setError}
+            />
+          </>
         ) : (
           <>
             <Card className="mb-6 overflow-hidden border-border shadow-sm">
@@ -437,8 +461,6 @@ export default function MemberDetailPage() {
             </Card>
 
             <ActionsPanel memberId={id} member={member} plans={plans ?? []} withHandlers={withHandlers} />
-
-            <FamilyMembersCard memberId={id} familyMembers={familyMembers ?? []} onError={setError} />
           </>
         )}
       </main>
@@ -451,36 +473,35 @@ function ProfileView({
 }: {
   member: NonNullable<Awaited<ReturnType<typeof memberService.getById>>>;
 }) {
-  const fields: [string, string | number | null | undefined][] = [
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  const registrationFields: [string, string | number | null | undefined][] = [
+    ["Full Name", member.fullName],
+    ["Father's Name", member.fatherName],
     ["Phone", member.phone],
     ["Email", member.email],
+    ["Birth Year", member.birthYear],
     ["Gender", member.gender],
     ["Blood Group", member.bloodGroup],
-    ["Date of Birth", member.dob ? new Date(member.dob).toLocaleDateString() : null],
-    ["Birth Year", member.birthYear],
-    ["Father's Name", member.fatherName],
-    ["Mother's Name", member.motherName],
-    ["House Name", member.houseName],
-    ["Place", member.place],
-    ["Post Office", member.postOffice],
     ["Address", member.address],
-    ["District", member.district],
-    ["State", member.state],
-    ["Country", member.country],
+    ["Native Place", member.nativePlace],
     ["Working Country", member.workingCountry],
     ["Zone", typeof member.zone === "object" ? member.zone?.name : member.zone],
-    ["Native Place", member.nativePlace],
+    ["Zone (Other)", member.zoneOther],
     ["Coordinator", typeof member.coordinator === "object" ? member.coordinator?.name : member.coordinator],
-    ["Passport Number", member.passportNumber],
-    ["Civil ID", member.civilId],
-    ["Occupation", member.occupation],
-    ["Committee Role", member.committeeRole],
-    ["Panchayath", member.panchayath],
-    ["Unit", member.unit],
+    ["Coordinator (Other)", member.coordinatorOther],
+    ["Mandalam Committee", member.mandalamCommittee],
+  ];
+
+  const membershipFields: [string, string | number | null | undefined][] = [
+    ["Membership ID", member.membershipId],
+    ["Status", member.membershipStatus],
     [
       "Membership Plan",
       typeof member.membershipType === "object" && member.membershipType ? member.membershipType.title : member.membershipType || "—",
     ],
+    ["Committee Role", member.committeeRole],
+    ["Panchayath", member.panchayath],
     ["Membership Start", member.membershipStart ? new Date(member.membershipStart).toLocaleDateString() : "—"],
     ["Membership Expiry", member.membershipExpiry ? new Date(member.membershipExpiry).toLocaleDateString() : "—"],
     ["Days Remaining", member.daysRemaining],
@@ -488,13 +509,49 @@ function ProfileView({
   ];
 
   return (
-    <div className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
-      {fields.map(([label, value]) => (
-        <div key={label} className="rounded-lg bg-primary/5 p-3">
-          <p className="text-xs font-utility uppercase tracking-wider text-muted-foreground">{label}</p>
-          <p className="text-sm font-medium text-foreground">{value || "—"}</p>
+    <div className="space-y-6">
+      {member.photo?.url && (
+        <div>
+          <p className="mb-2 text-xs font-utility uppercase tracking-wider text-muted-foreground">Photo</p>
+          <button
+            type="button"
+            onClick={() => setLightboxOpen(true)}
+            className="group relative h-32 w-32 overflow-hidden rounded-lg ring-1 ring-border"
+          >
+            <img src={member.photo.url} alt={member.fullName} className="h-full w-full object-cover transition group-hover:brightness-75" />
+            <span className="absolute inset-0 flex items-center justify-center text-xs font-medium text-white opacity-0 transition group-hover:opacity-100">
+              View full size
+            </span>
+          </button>
+          {lightboxOpen && (
+            <PhotoLightbox url={member.photo.url} alt={member.fullName} onClose={() => setLightboxOpen(false)} />
+          )}
         </div>
-      ))}
+      )}
+
+      <div>
+        <p className="mb-3 text-xs font-utility uppercase tracking-wider text-muted-foreground">Registration Details</p>
+        <div className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
+          {registrationFields.map(([label, value]) => (
+            <div key={label} className="rounded-lg bg-primary/5 p-3">
+              <p className="text-xs font-utility uppercase tracking-wider text-muted-foreground">{label}</p>
+              <p className="text-sm font-medium text-foreground">{value || "—"}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <p className="mb-3 text-xs font-utility uppercase tracking-wider text-muted-foreground">Membership Details</p>
+        <div className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
+          {membershipFields.map(([label, value]) => (
+            <div key={label} className="rounded-lg bg-primary/5 p-3">
+              <p className="text-xs font-utility uppercase tracking-wider text-muted-foreground">{label}</p>
+              <p className="text-sm font-medium text-foreground">{value || "—"}</p>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -519,28 +576,19 @@ function EditMemberForm({
     gender: initial.gender || "male",
     bloodGroup: initial.bloodGroup || "unknown",
     fatherName: initial.fatherName || "",
-    motherName: initial.motherName || "",
-    dob: initial.dob || "",
     birthYear: initial.birthYear || "",
     address: initial.address || "",
-    houseName: initial.houseName || "",
-    place: initial.place || "",
-    postOffice: initial.postOffice || "",
-    district: initial.district || "",
-    state: initial.state || "",
-    country: initial.country || "",
+    nativePlace: initial.nativePlace || "",
     workingCountry: initial.workingCountry || "",
     zone: typeof initial.zone === "string" ? initial.zone : "",
-    nativePlace: initial.nativePlace || "",
+    zoneOther: initial.zoneOther || "",
     coordinator: typeof initial.coordinator === "string" ? initial.coordinator : "",
-    passportNumber: initial.passportNumber || "",
-    civilId: initial.civilId || "",
-    occupation: initial.occupation || "",
+    coordinatorOther: initial.coordinatorOther || "",
+    mandalamCommittee: initial.mandalamCommittee || "",
     committeeRole: initial.committeeRole || "",
     panchayath: initial.panchayath || "",
-    unit: initial.unit || "",
     membershipType:
-      typeof initial.membershipType === "object" && initial.membershipType ? initial.membershipType._id : 
+      typeof initial.membershipType === "object" && initial.membershipType ? initial.membershipType._id :
       typeof initial.membershipType === "string" ? initial.membershipType : "",
   });
   const [photo, setPhoto] = useState<File | null>(null);
@@ -571,6 +619,10 @@ function EditMemberForm({
         <div className="space-y-1.5">
           <Label htmlFor="e_fullName">Full Name</Label>
           <Input id="e_fullName" value={form.fullName} onChange={handleChange("fullName")} className="rounded-xl" />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="e_fatherName">Father's Name</Label>
+          <Input id="e_fatherName" value={form.fatherName} onChange={handleChange("fatherName")} className="rounded-xl" />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="e_phone">Phone</Label>
@@ -608,48 +660,16 @@ function EditMemberForm({
           <Input id="e_photo" type="file" accept="image/*" onChange={(e) => setPhoto(e.target.files?.[0] ?? null)} className="rounded-xl" />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="e_dob">Date of Birth</Label>
-          <Input id="e_dob" type="date" value={form.dob} onChange={handleChange("dob")} className="rounded-xl" />
-        </div>
-        <div className="space-y-1.5">
           <Label htmlFor="e_birthYear">Birth Year</Label>
           <Input id="e_birthYear" type="number" value={form.birthYear} onChange={handleChange("birthYear")} className="rounded-xl" />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="e_fatherName">Father's Name</Label>
-          <Input id="e_fatherName" value={form.fatherName} onChange={handleChange("fatherName")} className="rounded-xl" />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="e_motherName">Mother's Name</Label>
-          <Input id="e_motherName" value={form.motherName} onChange={handleChange("motherName")} className="rounded-xl" />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="e_houseName">House Name</Label>
-          <Input id="e_houseName" value={form.houseName} onChange={handleChange("houseName")} className="rounded-xl" />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="e_place">Place</Label>
-          <Input id="e_place" value={form.place} onChange={handleChange("place")} className="rounded-xl" />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="e_postOffice">Post Office</Label>
-          <Input id="e_postOffice" value={form.postOffice} onChange={handleChange("postOffice")} className="rounded-xl" />
         </div>
         <div className="space-y-1.5 sm:col-span-2">
           <Label htmlFor="e_address">Address</Label>
           <Input id="e_address" value={form.address} onChange={handleChange("address")} className="rounded-xl" />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="e_district">District</Label>
-          <Input id="e_district" value={form.district} onChange={handleChange("district")} className="rounded-xl" />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="e_state">State</Label>
-          <Input id="e_state" value={form.state} onChange={handleChange("state")} className="rounded-xl" />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="e_country">Country</Label>
-          <Input id="e_country" value={form.country} onChange={handleChange("country")} className="rounded-xl" />
+          <Label htmlFor="e_nativePlace">Native Place</Label>
+          <Input id="e_nativePlace" value={form.nativePlace} onChange={handleChange("nativePlace")} className="rounded-xl" />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="e_workingCountry">Working Country</Label>
@@ -660,24 +680,20 @@ function EditMemberForm({
           <Input id="e_zone" value={form.zone} onChange={handleChange("zone")} className="rounded-xl" />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="e_nativePlace">Native Place</Label>
-          <Input id="e_nativePlace" value={form.nativePlace} onChange={handleChange("nativePlace")} className="rounded-xl" />
+          <Label htmlFor="e_zoneOther">Zone (Other)</Label>
+          <Input id="e_zoneOther" value={form.zoneOther} onChange={handleChange("zoneOther")} className="rounded-xl" />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="e_coordinator">Coordinator</Label>
           <Input id="e_coordinator" value={form.coordinator} onChange={handleChange("coordinator")} className="rounded-xl" />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="e_passportNumber">Passport Number</Label>
-          <Input id="e_passportNumber" value={form.passportNumber} onChange={handleChange("passportNumber")} className="rounded-xl" />
+          <Label htmlFor="e_coordinatorOther">Coordinator (Other)</Label>
+          <Input id="e_coordinatorOther" value={form.coordinatorOther} onChange={handleChange("coordinatorOther")} className="rounded-xl" />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="e_civilId">Civil ID</Label>
-          <Input id="e_civilId" value={form.civilId} onChange={handleChange("civilId")} className="rounded-xl" />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="e_occupation">Occupation</Label>
-          <Input id="e_occupation" value={form.occupation} onChange={handleChange("occupation")} className="rounded-xl" />
+          <Label htmlFor="e_mandalamCommittee">Mandalam Committee</Label>
+          <Input id="e_mandalamCommittee" value={form.mandalamCommittee} onChange={handleChange("mandalamCommittee")} className="rounded-xl" />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="e_committeeRole">Committee Role</Label>
@@ -686,10 +702,6 @@ function EditMemberForm({
         <div className="space-y-1.5">
           <Label htmlFor="e_panchayath">Panchayath</Label>
           <Input id="e_panchayath" value={form.panchayath} onChange={handleChange("panchayath")} className="rounded-xl" />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="e_unit">Unit</Label>
-          <Input id="e_unit" value={form.unit} onChange={handleChange("unit")} className="rounded-xl" />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="e_membershipType">Membership Plan</Label>
@@ -735,10 +747,9 @@ function PendingApprovalCard({
   const router = useRouter();
   const [membershipType, setMembershipType] = useState("");
   const [committeeRole, setCommitteeRole] = useState("");
-  const [unit, setUnit] = useState("");
 
   const approveMutation = useMutation({
-    mutationFn: () => memberService.approve(memberId, { membershipType, committeeRole, unit }),
+    mutationFn: () => memberService.approve(memberId, { membershipType, committeeRole }),
     onSuccess: (data) => {
       const msg = data.temporaryPassword
         ? `Application approved. Temporary password: ${data.temporaryPassword}`
@@ -764,7 +775,7 @@ function PendingApprovalCard({
       </CardHeader>
       <CardContent className="space-y-4 pt-6">
         <p className="text-sm text-muted-foreground">
-          This member has submitted an application and is waiting for approval. Select a membership plan and optionally assign a committee role or unit.
+          Review the applicant details above, then select a membership plan to approve, or reject the application.
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
@@ -786,10 +797,6 @@ function PendingApprovalCard({
           <div className="space-y-1.5">
             <Label htmlFor="p_role">Committee Role</Label>
             <Input id="p_role" value={committeeRole} onChange={(e) => setCommitteeRole(e.target.value)} className="rounded-xl" placeholder="Optional" />
-          </div>
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="p_unit">Unit</Label>
-            <Input id="p_unit" value={unit} onChange={(e) => setUnit(e.target.value)} className="rounded-xl" placeholder="Optional" />
           </div>
         </div>
 
@@ -881,7 +888,7 @@ function ActionsPanel({
           <Button
             variant="outline"
             disabled={busy}
-            onClick={() => memberService.downloadCard(memberId, member.membershipId)}
+            onClick={() => memberService.downloadCard(memberId)}
             className="rounded-xl"
           >
             📇 Download Card
@@ -926,107 +933,6 @@ function ActionsPanel({
             🔄 Renew
           </Button>
         </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function FamilyMembersCard({
-  memberId,
-  familyMembers,
-  onError,
-}: {
-  memberId: string;
-  familyMembers: Awaited<ReturnType<typeof memberService.listFamily>>;
-  onError: (msg: string) => void;
-}) {
-  const queryClient = useQueryClient();
-  const [showForm, setShowForm] = useState(false);
-  const [name, setName] = useState("");
-  const [relation, setRelation] = useState("spouse");
-
-  const addMutation = useMutation({
-    mutationFn: () => {
-      const formData = new FormData();
-      formData.append("name", name);
-      formData.append("relation", relation);
-      return memberService.addFamily(memberId, formData);
-    },
-    onSuccess: () => {
-      setName("");
-      setShowForm(false);
-      queryClient.invalidateQueries({ queryKey: ["members", "family", memberId] });
-    },
-    onError: (err) => onError(extractErrorMessage(err)),
-  });
-
-  const removeMutation = useMutation({
-    mutationFn: (familyId: string) => memberService.removeFamily(memberId, familyId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["members", "family", memberId] }),
-    onError: (err) => onError(extractErrorMessage(err)),
-  });
-
-  return (
-    <Card className="overflow-hidden border-border shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between border-b border-border bg-primary/5">
-        <CardTitle>Family Members</CardTitle>
-        <Button variant="outline" size="sm" onClick={() => setShowForm((v) => !v)} className="gap-2 rounded-xl">
-          {showForm ? "✕ Cancel" : "+ Add"}
-        </Button>
-      </CardHeader>
-      <CardContent className="pt-6">
-        {showForm && (
-          <div className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
-            <div className="flex-1 min-w-[150px] space-y-1.5">
-              <Label htmlFor="fm_name">Name</Label>
-              <Input id="fm_name" value={name} onChange={(e) => setName(e.target.value)} className="rounded-xl" placeholder="Enter name" />
-            </div>
-            <div className="flex-1 min-w-[120px] space-y-1.5">
-              <Label htmlFor="fm_relation">Relation</Label>
-              <select id="fm_relation" className={selectClass} value={relation} onChange={(e) => setRelation(e.target.value)}>
-                {FAMILY_RELATIONS.map((r) => (
-                  <option key={r} value={r}>
-                    {r.charAt(0).toUpperCase() + r.slice(1)}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <Button
-              disabled={!name.trim() || addMutation.isPending}
-              onClick={() => addMutation.mutate()}
-              className="rounded-xl bg-primary hover:bg-primary/90"
-            >
-              {addMutation.isPending ? "Adding..." : "Add Member"}
-            </Button>
-          </div>
-        )}
-
-        {familyMembers.length === 0 ? (
-          <div className="py-8 text-center">
-            <p className="text-sm text-muted-foreground">No family members added yet.</p>
-            <p className="text-xs text-muted-foreground">Click "Add" to add a family member.</p>
-          </div>
-        ) : (
-          <ul className="divide-y divide-border">
-            {familyMembers.map((fm: any) => (
-              <li key={fm._id} className="flex items-center justify-between py-3">
-                <div>
-                  <span className="font-medium text-foreground">{fm.name}</span>
-                  <span className="ml-2 text-sm text-muted-foreground">({fm.relation})</span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={removeMutation.isPending}
-                  onClick={() => removeMutation.mutate(fm._id)}
-                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                >
-                  Remove
-                </Button>
-              </li>
-            ))}
-          </ul>
-        )}
       </CardContent>
     </Card>
   );

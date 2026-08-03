@@ -2,24 +2,8 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
-
-const AdminNav = () => {
-  return (
-    <nav className="bg-white border-b border-border px-6 py-4">
-      <div className="mx-auto max-w-6xl flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="font-display text-xl font-bold text-foreground">Admin Panel</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <a href="/admin/dashboard" className="text-sm text-muted-foreground hover:text-primary transition-colors">Dashboard</a>
-          <a href="/admin/committee" className="text-sm text-primary font-medium">Committee</a>
-          <a href="/admin/members" className="text-sm text-muted-foreground hover:text-primary transition-colors">Members</a>
-        </div>
-      </div>
-    </nav>
-  );
-};
+import { apiClient, extractErrorMessage } from "@/lib/apiClient";
+import { AdminNav } from "@/components/AdminNav";
 
 const Card = ({
   children,
@@ -357,32 +341,21 @@ const YEARS = [2024, 2025, 2026];
 
 const committeeService = {
   listAdmin: async () => {
-    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/admin/committee`);
+    const response = await apiClient.get(`/committee/admin`);
     return response.data;
   },
   create: async (data: FormData) => {
-    const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/admin/committee`, data, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    const response = await apiClient.post(`/committee`, data);
     return response.data;
   },
   update: async (id: string, data: FormData) => {
-    const response = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/admin/committee/${id}`, data, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    const response = await apiClient.put(`/committee/${id}`, data);
     return response.data;
   },
   delete: async (id: string) => {
-    const response = await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/admin/committee/${id}`);
+    const response = await apiClient.delete(`/committee/${id}`);
     return response.data;
   },
-};
-
-const extractErrorMessage = (error: any): string => {
-  if (error.response?.data?.message) return error.response.data.message;
-  if (error instanceof Error) return error.message;
-  if (typeof error === "string") return error;
-  return "An unexpected error occurred. Please try again.";
 };
 
 export default function AdminCommitteePage() {
@@ -398,7 +371,7 @@ export default function AdminCommitteePage() {
     queryFn: committeeService.listAdmin,
   });
 
-  const members = data?.members || [];
+  const members = data?.data?.members || data?.members || [];
 
   const filteredMembers = members.filter(
     (m: any) => m.type === selectedType && m.year === selectedYear
@@ -598,6 +571,7 @@ function CommitteeForm({
     year: member?.year || year,
   });
   const [photo, setPhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(member?.photo?.url || null);
 
   const mutation = useMutation({
     mutationFn: (data: FormData) =>
@@ -609,20 +583,34 @@ function CommitteeForm({
     onError: (err) => onError(extractErrorMessage(err)),
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const formData = new FormData();
-    Object.entries(form).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== "") {
-        formData.append(key, String(value));
-      }
-    });
-    if (photo) formData.append("photo", photo);
-    mutation.mutate(formData);
-  };
+const handleSubmit = (e: React.FormEvent) => {
+  e.preventDefault();
+  const formData = new FormData();
+  Object.entries(form).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      formData.append(key, String(value));
+    }
+  });
+  if (photo) formData.append("photo", photo);
+
+  console.log("photo state:", photo);
+  for (const pair of formData.entries()) {
+    console.log("FormData entry:", pair[0], pair[1]);
+  }
+
+  mutation.mutate(formData);
+};
 
   const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
+  };
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setPhoto(file);
+    if (file) {
+      setPhotoPreview(URL.createObjectURL(file));
+    }
   };
 
   return (
@@ -697,9 +685,16 @@ function CommitteeForm({
                 id="cf_photo"
                 type="file"
                 accept="image/*"
-                onChange={(e) => setPhoto(e.target.files?.[0] || null)}
+                onChange={handlePhotoChange}
                 className="rounded-xl"
               />
+              {photoPreview && (
+                <img
+                  src={photoPreview}
+                  alt="Preview"
+                  className="mt-2 h-20 w-20 rounded-xl object-cover border border-border"
+                />
+              )}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="cf_type">Committee Type</Label>
