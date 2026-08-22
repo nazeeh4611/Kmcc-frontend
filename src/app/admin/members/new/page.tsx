@@ -214,6 +214,8 @@ const extractErrorMessage = (error: any): string => {
   return "An unexpected error occurred. Please try again.";
 };
 
+const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+
 export default function NewMemberPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -222,25 +224,14 @@ export default function NewMemberPage() {
   const [form, setForm] = useState({
     fullName: "",
     phone: "",
-    email: "",
-    gender: "male",
-    bloodGroup: "unknown",
     fatherName: "",
-    motherName: "",
     address: "",
-    district: "",
-    state: "",
-    country: "India",
+    bloodGroup: "",
     workingCountry: "",
-    passportNumber: "",
-    civilId: "",
-    occupation: "",
     zone: "",
-    nativePlace: "",
     committeeRole: "",
     unit: "",
     membershipType: "",
-    password: "",
   });
 
   const { data: zones } = useQuery({ queryKey: ["meta", "zones"], queryFn: metaService.listZones });
@@ -263,8 +254,8 @@ export default function NewMemberPage() {
     e.preventDefault();
     setError(null);
 
-    if (!form.membershipType) {
-      setError("Please select a membership plan.");
+    if (!photo) {
+      setError("Please upload a photo.");
       return;
     }
 
@@ -272,7 +263,7 @@ export default function NewMemberPage() {
     Object.entries(form).forEach(([key, value]) => {
       if (value) formData.append(key, value);
     });
-    if (photo) formData.append("photo", photo);
+    formData.append("photo", photo);
 
     createMutation.mutate(formData);
   };
@@ -306,30 +297,18 @@ export default function NewMemberPage() {
                   <Input id="fullName" required value={form.fullName} onChange={handleChange("fullName")} className="rounded-xl" placeholder="Enter full name" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="phone">Phone *</Label>
-                  <Input id="phone" required value={form.phone} onChange={handleChange("phone")} className="rounded-xl" placeholder="Enter phone number" />
+                  <Label htmlFor="phone">Mobile Number *</Label>
+                  <Input id="phone" required value={form.phone} onChange={handleChange("phone")} className="rounded-xl" placeholder="Enter mobile number" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" value={form.email} onChange={handleChange("email")} className="rounded-xl" placeholder="Enter email address" />
+                  <Label htmlFor="fatherName">Father's Name *</Label>
+                  <Input id="fatherName" required value={form.fatherName} onChange={handleChange("fatherName")} className="rounded-xl" placeholder="Enter father's name" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="gender">Gender</Label>
-                  <select id="gender" className={selectClass} value={form.gender} onChange={handleChange("gender")}>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="bloodGroup">Blood Group</Label>
-                  <select
-                    id="bloodGroup"
-                    className={selectClass}
-                    value={form.bloodGroup}
-                    onChange={handleChange("bloodGroup")}
-                  >
-                    {["unknown", "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((bg) => (
+                  <Label htmlFor="bloodGroup">Blood Group *</Label>
+                  <select id="bloodGroup" required className={selectClass} value={form.bloodGroup} onChange={handleChange("bloodGroup")}>
+                    <option value="">Select blood group</option>
+                    {BLOOD_GROUPS.map((bg) => (
                       <option key={bg} value={bg}>
                         {bg}
                       </option>
@@ -337,7 +316,11 @@ export default function NewMemberPage() {
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="photo">Photo</Label>
+                  <Label htmlFor="workingCountry">Working Country *</Label>
+                  <Input id="workingCountry" required value={form.workingCountry} onChange={handleChange("workingCountry")} className="rounded-xl" placeholder="Enter working country" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="photo">Photo *</Label>
                   <Input
                     id="photo"
                     type="file"
@@ -346,48 +329,12 @@ export default function NewMemberPage() {
                     className="rounded-xl"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="fatherName">Father's Name</Label>
-                  <Input id="fatherName" value={form.fatherName} onChange={handleChange("fatherName")} className="rounded-xl" placeholder="Enter father's name" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="motherName">Mother's Name</Label>
-                  <Input id="motherName" value={form.motherName} onChange={handleChange("motherName")} className="rounded-xl" placeholder="Enter mother's name" />
-                </div>
                 <div className="space-y-1.5 sm:col-span-2">
-                  <Label htmlFor="address">Address</Label>
-                  <Input id="address" value={form.address} onChange={handleChange("address")} className="rounded-xl" placeholder="Enter address" />
+                  <Label htmlFor="address">Address *</Label>
+                  <Input id="address" required value={form.address} onChange={handleChange("address")} className="rounded-xl" placeholder="Enter address" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="district">District</Label>
-                  <Input id="district" value={form.district} onChange={handleChange("district")} className="rounded-xl" placeholder="Enter district" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="state">State</Label>
-                  <Input id="state" value={form.state} onChange={handleChange("state")} className="rounded-xl" placeholder="Enter state" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="country">Country</Label>
-                  <Input id="country" value={form.country} onChange={handleChange("country")} className="rounded-xl" placeholder="Enter country" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="workingCountry">Working Country</Label>
-                  <Input id="workingCountry" value={form.workingCountry} onChange={handleChange("workingCountry")} className="rounded-xl" placeholder="Enter working country" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="passportNumber">Passport Number</Label>
-                  <Input id="passportNumber" value={form.passportNumber} onChange={handleChange("passportNumber")} className="rounded-xl" placeholder="Enter passport number" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="civilId">Civil ID</Label>
-                  <Input id="civilId" value={form.civilId} onChange={handleChange("civilId")} className="rounded-xl" placeholder="Enter civil ID" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="occupation">Occupation</Label>
-                  <Input id="occupation" value={form.occupation} onChange={handleChange("occupation")} className="rounded-xl" placeholder="Enter occupation" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="zone">Zone</Label>
+                  <Label htmlFor="zone">Zone (optional)</Label>
                   <select id="zone" className={selectClass} value={form.zone} onChange={handleChange("zone")}>
                     <option value="">Select zone</option>
                     {zones?.map((zone: any) => (
@@ -398,45 +345,28 @@ export default function NewMemberPage() {
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="nativePlace">Native Place</Label>
-                  <Input id="nativePlace" value={form.nativePlace} onChange={handleChange("nativePlace")} className="rounded-xl" placeholder="Enter native place" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="committeeRole">Committee Role</Label>
+                  <Label htmlFor="committeeRole">Committee Role (optional)</Label>
                   <Input id="committeeRole" value={form.committeeRole} onChange={handleChange("committeeRole")} className="rounded-xl" placeholder="Enter committee role" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="unit">Unit</Label>
+                  <Label htmlFor="unit">Unit (optional)</Label>
                   <Input id="unit" value={form.unit} onChange={handleChange("unit")} className="rounded-xl" placeholder="Enter unit" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="membershipType">Membership Plan *</Label>
+                  <Label htmlFor="membershipType">Membership Plan (optional)</Label>
                   <select
                     id="membershipType"
-                    required
                     className={selectClass}
                     value={form.membershipType}
                     onChange={handleChange("membershipType")}
                   >
-                    <option value="">Select a plan</option>
+                    <option value="">No plan</option>
                     {plans?.map((plan: any) => (
                       <option key={plan._id} value={plan._id}>
                         {plan.title} ({plan.duration}mo)
                       </option>
                     ))}
                   </select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="text"
-                    placeholder="Auto-generated if left blank"
-                    value={form.password}
-                    onChange={handleChange("password")}
-                    className="rounded-xl"
-                  />
-                  <p className="text-xs text-muted-foreground">Leave blank to auto-generate a secure password.</p>
                 </div>
               </div>
 
