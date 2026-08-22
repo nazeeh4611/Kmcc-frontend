@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/apiClient";
 import Link from "next/link";
+import Image from "next/image";
 const AdminNav = () => {
   return (
     <nav className="bg-white border-b border-border px-6 py-4">
@@ -12,7 +13,6 @@ const AdminNav = () => {
         <div className="flex items-center gap-2">
           <span className="font-display text-xl font-bold text-foreground">Admin Panel</span>
         </div>
-        import Link from "next/link";
 
 <div className="flex items-center gap-4">
   <Link
@@ -322,12 +322,14 @@ function PhotoLightbox({ url, alt, onClose }: { url: string; alt: string; onClos
       >
         ✕
       </button>
-      <img
-        src={url}
-        alt={alt}
-        onClick={(e) => e.stopPropagation()}
-        className="max-h-full max-w-full rounded-lg object-contain shadow-2xl"
-      />
+   <Image
+  src={url}
+  alt={alt}
+  width={1200}
+  height={1200}
+  className="max-h-full max-w-full rounded-lg object-contain shadow-2xl"
+  onClick={(e) => e.stopPropagation()}
+/>
     </div>
   );
 }
@@ -390,8 +392,9 @@ export default function MemberDetailPage() {
             <span className="text-2xl">!</span>
           </div>
           <h2 className="mt-4 text-2xl font-bold text-foreground">Member Not Found</h2>
-          <p className="mt-2 text-muted-foreground">The member you're looking for doesn't exist or has been removed.</p>
-          <Button className="mt-6" onClick={() => router.push("/admin/members")}>
+<p className="mt-2 text-muted-foreground">
+  The member you&apos;re looking for doesn&apos;t exist or has been removed.
+</p>          <Button className="mt-6" onClick={() => router.push("/admin/members")}>
             Back to Members
           </Button>
         </div>
@@ -543,8 +546,13 @@ function ProfileView({
             onClick={() => setLightboxOpen(true)}
             className="group relative h-32 w-32 overflow-hidden rounded-lg ring-1 ring-border"
           >
-            <img src={member.photo.url} alt={member.fullName} className="h-full w-full object-cover transition group-hover:brightness-75" />
-            <span className="absolute inset-0 flex items-center justify-center text-xs font-medium text-white opacity-0 transition group-hover:opacity-100">
+<Image
+  src={member.photo.url}
+  alt={member.fullName}
+  fill
+  sizes="128px"
+  className="object-cover transition group-hover:brightness-75"
+/>            <span className="absolute inset-0 flex items-center justify-center text-xs font-medium text-white opacity-0 transition group-hover:opacity-100">
               View full size
             </span>
           </button>
@@ -646,7 +654,7 @@ function EditMemberForm({
           <Input id="e_fullName" value={form.fullName} onChange={handleChange("fullName")} className="rounded-xl" />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="e_fatherName">Father's Name</Label>
+         <Label htmlFor="e_fatherName">Father&apos;s Name</Label>
           <Input id="e_fatherName" value={form.fatherName} onChange={handleChange("fatherName")} className="rounded-xl" />
         </div>
         <div className="space-y-1.5">

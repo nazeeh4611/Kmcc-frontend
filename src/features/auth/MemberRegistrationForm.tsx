@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import axios from "axios";
+import Image from "next/image";
 
 const registerMemberSchema = z.object({
   photo: z.any().optional(),
@@ -489,7 +490,7 @@ export function MemberRegistrationForm() {
               className="flex h-24 w-24 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-brass bg-white text-brass transition hover:bg-brass/5"
             >
               {photoPreview ? (
-                <img src={photoPreview} alt="Preview" className="h-full w-full object-cover" />
+                <Image src={photoPreview} alt="Preview" className="h-full w-full object-cover" />
               ) : (
                 <FiCamera size={22} />
               )}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
+import Image from "next/image";
 
 type BannerImage = {
   id: string;
@@ -59,14 +60,14 @@ export default function HeroBanner() {
           >
             {banners.map((banner) => (
               <div key={banner.id} className="relative h-full w-full flex-shrink-0 overflow-hidden">
-                <img
+                <Image
                   src={banner.url}
                   alt=""
                   aria-hidden="true"
                   className="absolute inset-0 h-full w-full scale-110 object-cover blur-2xl opacity-60"
                 />
                 <div className="absolute inset-0 bg-green-900/40" />
-                <img
+                <Image
                   src={banner.url}
                   alt={banner.alt}
                   className="relative z-10 h-full w-full object-contain"

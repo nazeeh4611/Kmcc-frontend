@@ -1,7 +1,7 @@
 "use client";
 
 import { Phone, Mail } from "lucide-react";
-
+import Image from "next/image";
 interface Member {
   name: string;
   designation: string;
@@ -21,7 +21,7 @@ export default function MemberCard({ member, ink }: MemberCardProps) {
   return (
     <div className="group flex items-center gap-5 rounded-2xl border border-line bg-white p-5 shadow-card transition-all duration-200 hover:-translate-y-1 hover:shadow-card-lg">
       {member.photo?.url ? (
-        <img
+        <Image
           src={member.photo.url}
           alt={member.name}
           className="h-24 w-24 shrink-0 rounded-2xl object-cover"

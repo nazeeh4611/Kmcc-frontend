@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, extractErrorMessage } from "@/lib/apiClient";
 import { AdminNav } from "@/components/AdminNav";
-
+import Image from "next/image";
 const Card = ({
   children,
   className = "",
@@ -488,7 +488,7 @@ export default function AdminCommitteePage() {
                 <div className="relative">
                   <div className="aspect-video bg-primary/5 flex items-center justify-center">
                     {member.photo?.url ? (
-                      <img src={member.photo.url} alt={member.name} className="h-full w-full object-cover" />
+                      <Image src={member.photo.url} alt={member.name} className="h-full w-full object-cover" />
                     ) : (
                       <Users className="h-16 w-16 text-muted-foreground/30" />
                     )}
@@ -689,7 +689,7 @@ const handleSubmit = (e: React.FormEvent) => {
                 className="rounded-xl"
               />
               {photoPreview && (
-                <img
+                <Image
                   src={photoPreview}
                   alt="Preview"
                   className="mt-2 h-20 w-20 rounded-xl object-cover border border-border"

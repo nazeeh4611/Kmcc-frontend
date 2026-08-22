@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { AdminNav } from "@/components/AdminNav";
+import Image from "next/image";
 
 const Card = ({
   children,
@@ -132,7 +133,7 @@ const Trash2 = ({ className = "", size = 16 }) => (
   </svg>
 );
 
-const Image = ({ className = "", size = 48 }) => (
+const ImageIcon = ({ className = "", size = 48 }) => (
   <svg
     stroke="currentColor"
     fill="none"
@@ -301,7 +302,7 @@ export default function AdminBannersPage() {
             </div>
           ) : banners.length === 0 ? (
             <Card className="border-dashed border-2 p-12 text-center">
-              <Image className="mx-auto h-12 w-12 text-muted-foreground/30" />
+              <ImageIcon className="mx-auto h-12 w-12 text-muted-foreground/30" />
               <p className="mt-2 text-muted-foreground">No banners uploaded yet.</p>
               <p className="text-sm text-muted-foreground">Upload your first banner above.</p>
             </Card>
@@ -310,7 +311,7 @@ export default function AdminBannersPage() {
               {banners.map((banner, index) => (
                 <Card key={banner.id} className="overflow-hidden border-border shadow-sm hover:shadow-md transition-shadow group">
                   <div className="relative aspect-video bg-primary/5">
-                    <img src={banner.url} alt={banner.alt} className="h-full w-full object-cover" />
+                    <Image src={banner.url} alt={banner.alt} className="h-full w-full object-cover" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     <Button
                       onClick={() => handleDelete(banner.id)}

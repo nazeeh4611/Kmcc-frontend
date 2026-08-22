@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import Link from "next/link";
-
+import Image from "next/image";
 
 const AdminNav = () => {
   return (
@@ -14,7 +14,6 @@ const AdminNav = () => {
         <div className="flex items-center gap-2">
           <span className="font-display text-xl font-bold text-foreground">Admin Panel</span>
         </div>
-        import Link from "next/link";
 
 <div className="flex items-center gap-4">
   <Link
@@ -328,7 +327,7 @@ export default function NewMemberPage() {
                   <Input id="phone" required value={form.phone} onChange={handleChange("phone")} className="rounded-xl" placeholder="Enter mobile number" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="fatherName">Father's Name *</Label>
+                  <Label htmlFor="fatherName">Father&apos;s Name *</Label>
                   <Input id="fatherName" required value={form.fatherName} onChange={handleChange("fatherName")} className="rounded-xl" placeholder="Enter father's name" />
                 </div>
                 <div className="space-y-1.5">

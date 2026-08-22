@@ -7,6 +7,9 @@ import axios from "axios";
 import { AdminNav } from "@/components/AdminNav";
 import { apiClient } from "@/lib/apiClient";
 
+import Image from "next/image";
+
+
 const Card = ({
   children,
   className = "",
@@ -473,7 +476,7 @@ export default function AdminMembersPage() {
                         <div className="flex items-center gap-3">
                           <div className="h-10 w-10 overflow-hidden rounded-full bg-primary/10 ring-2 ring-primary/10">
                             {member.photo?.url && (
-                              <img src={member.photo.url} alt={member.fullName} className="h-full w-full object-cover" />
+                              <Image src={member.photo.url} alt={member.fullName} className="h-full w-full object-cover" />
                             )}
                           </div>
                           <div>
