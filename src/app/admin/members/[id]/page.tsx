@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/apiClient";
-
+import Link from "next/link";
 const AdminNav = () => {
   return (
     <nav className="bg-white border-b border-border px-6 py-4">
@@ -12,12 +12,37 @@ const AdminNav = () => {
         <div className="flex items-center gap-2">
           <span className="font-display text-xl font-bold text-foreground">Admin Panel</span>
         </div>
-        <div className="flex items-center gap-4">
-          <a href="/admin/dashboard" className="text-sm text-muted-foreground hover:text-primary transition-colors">Dashboard</a>
-          <a href="/admin/members" className="text-sm text-primary font-medium">Members</a>
-          <a href="/admin/committee" className="text-sm text-muted-foreground hover:text-primary transition-colors">Committee</a>
-          <a href="/admin/banners" className="text-sm text-muted-foreground hover:text-primary transition-colors">Banners</a>
-        </div>
+        import Link from "next/link";
+
+<div className="flex items-center gap-4">
+  <Link
+    href="/admin/dashboard"
+    className="text-sm text-muted-foreground hover:text-primary transition-colors"
+  >
+    Dashboard
+  </Link>
+
+  <Link
+    href="/admin/members"
+    className="text-sm text-primary font-medium"
+  >
+    Members
+  </Link>
+
+  <Link
+    href="/admin/committee"
+    className="text-sm text-muted-foreground hover:text-primary transition-colors"
+  >
+    Committee
+  </Link>
+
+  <Link
+    href="/admin/banners"
+    className="text-sm text-muted-foreground hover:text-primary transition-colors"
+  >
+    Banners
+  </Link>
+</div>
       </div>
     </nav>
   );
