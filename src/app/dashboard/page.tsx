@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
   Hash,
@@ -12,6 +13,7 @@ import {
   Calendar,
   Download,
   LogOut,
+  Home,
   User as UserIcon,
 } from "lucide-react";
 import { useAuth } from "@/store/authContext";
@@ -31,6 +33,7 @@ const asName = (value: string | Zone | Coordinator | MembershipPlan | null | und
 };
 
 export default function MemberDashboardPage() {
+  const router = useRouter();
   const { logout, isLoggingOut } = useAuth();
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
@@ -64,10 +67,16 @@ export default function MemberDashboardPage() {
               {isLoading ? "Welcome back" : member?.fullName ?? "Welcome back"}
             </h1>
           </div>
-          <Button variant="outline" onClick={logout} loading={isLoggingOut} disabled={isLoggingOut}>
-            <LogOut size={16} />
-            Sign out
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => router.push("/")}>
+              <Home size={16} />
+              Home
+            </Button>
+            <Button variant="outline" onClick={logout} loading={isLoggingOut} disabled={isLoggingOut}>
+              <LogOut size={16} />
+              Sign out
+            </Button>
+          </div>
         </div>
       </header>
 
