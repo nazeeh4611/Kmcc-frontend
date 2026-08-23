@@ -5,7 +5,12 @@ import { Stamp } from "lucide-react";
 import { FaFacebook, FaInstagram, FaYoutube } from "react-icons/fa";
 import { gccChapters } from "../lib/PlaceholderData";
 
-const quickLinks = ["Home", "About", "Committee", "Updates"];
+const quickLinks = [
+  { label: "Home", href: "/" },
+  { label: "About", href: "/#about" },
+  { label: "Committee", href: "/#committee" },
+  { label: "Updates", href: "/#media" },
+];
 const anchors = [
   "CM Center Chalakkara",
   "SNADS Chelambra",
@@ -44,9 +49,9 @@ export default function Footer() {
             </p>
             <ul className="mt-4 flex flex-col gap-2.5">
               {quickLinks.map((item) => (
-                <li key={item}>
-                  <Link href="/" className="font-body text-sm text-slate transition-colors hover:text-green">
-                    {item}
+                <li key={item.label}>
+                  <Link href={item.href} className="font-body text-sm text-slate transition-colors hover:text-green">
+                    {item.label}
                   </Link>
                 </li>
               ))}

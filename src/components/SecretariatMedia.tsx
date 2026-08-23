@@ -4,7 +4,7 @@ import CommitteeSection from "./CommitteeSection";
 
 export default function SecretariatMedia() {
   return (
-    <section className="bg-white px-4 pb-20 sm:px-6 lg:px-8 space-y-20">
+    <section id="media" className="scroll-mt-24 bg-white px-4 pb-20 sm:px-6 lg:px-8 space-y-20">
       <CommitteeSection
         type="secretariat"
         eyebrow="Governance"

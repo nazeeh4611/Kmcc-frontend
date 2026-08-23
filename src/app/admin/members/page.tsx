@@ -474,9 +474,9 @@ export default function AdminMembersPage() {
                     <tr key={member._id} className="hover:bg-primary/5 transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 overflow-hidden rounded-full bg-primary/10 ring-2 ring-primary/10">
+                          <div className="relative h-10 w-10 overflow-hidden rounded-full bg-primary/10 ring-2 ring-primary/10">
                             {member.photo?.url && (
-                              <Image src={member.photo.url} alt={member.fullName} className="h-full w-full object-cover" />
+                              <Image src={member.photo.url} alt={member.fullName} fill sizes="40px" className="object-cover" />
                             )}
                           </div>
                           <div>

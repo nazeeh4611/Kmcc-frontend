@@ -8,10 +8,10 @@ import Image from "next/image";
 
 const links = [
   { label: "Home", href: "/" },
-  { label: "About", href: "/about" },
-  { label: "Committee", href: "/committee" },
-  { label: "Panchayaths", href: "/panchayaths" },
-  { label: "Media", href: "/media" },
+  { label: "About", href: "/#about" },
+  { label: "Committee", href: "/#committee" },
+  { label: "Panchayaths", href: "/#panchayaths" },
+  { label: "Media", href: "/#media" },
 ];
 
 export default function Navbar() {

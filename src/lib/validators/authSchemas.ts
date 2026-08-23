@@ -7,8 +7,8 @@ export const adminLoginSchema = z.object({
 export type AdminLoginInput = z.infer<typeof adminLoginSchema>;
 
 export const memberLoginSchema = z.object({
-  phone: z.string().min(7, "Enter a valid mobile number."),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  membershipId: z.string().min(1, "Membership ID is required"),
+  password: z.string().regex(/^\d{4}$/, "Password must be exactly 4 digits"),
 });
 export type MemberLoginInput = z.infer<typeof memberLoginSchema>;
 

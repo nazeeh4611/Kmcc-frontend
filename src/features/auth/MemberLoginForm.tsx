@@ -4,16 +4,9 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { authService } from "@/services/authService";
+import { useMemberLogin } from "@/hooks/useAuthMutations";
 import { extractErrorMessage } from "@/lib/apiClient";
-
-const memberLoginSchema = z.object({
-  membershipId: z.string().min(1, "Membership ID is required"),
-  password: z.string().regex(/^\d{4}$/, "Password must be exactly 4 digits"),
-});
-
-type MemberLoginInput = z.infer<typeof memberLoginSchema>;
+import { memberLoginSchema, type MemberLoginInput } from "@/lib/validators/authSchemas";
 
 const Button = ({
   children,
@@ -405,6 +398,7 @@ export function MemberLoginForm() {
   const searchParams = useSearchParams();
   const [serverError, setServerError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const memberLogin = useMemberLogin();
 
   const {
     register,
@@ -421,7 +415,7 @@ export function MemberLoginForm() {
   const onSubmit = async (values: MemberLoginInput) => {
     setServerError(null);
     try {
-      await authService.memberLogin(values);
+      await memberLogin.mutateAsync(values);
       const redirect = searchParams.get("redirect") || "/dashboard";
       router.push(redirect);
     } catch (error) {

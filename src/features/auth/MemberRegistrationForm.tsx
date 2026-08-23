@@ -6,7 +6,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import axios from "axios";
-import Image from "next/image";
+import { useQuery } from "@tanstack/react-query";
+import { publicService } from "@/services/publicService";
 
 const registerMemberSchema = z.object({
   photo: z.any().optional(),
@@ -235,105 +236,19 @@ const NOT_IN_LIST = "__not_in_list__";
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", "unknown"];
 
-const DUMMY_ZONES = [
-  { _id: "zone_1", name: "Kozhikode North" },
-  { _id: "zone_2", name: "Kozhikode South" },
-  { _id: "zone_3", name: "Malappuram Central" },
-  { _id: "zone_4", name: "Palakkad East" },
-  { _id: "zone_5", name: "Thrissur West" },
-  { _id: "zone_6", name: "Ernakulam Central" },
-  { _id: "zone_7", name: "Kottayam South" },
-  { _id: "zone_8", name: "Alappuzha North" },
-  { _id: "zone_9", name: "Pathanamthitta Central" },
-  { _id: "zone_10", name: "Kollam West" },
-  { _id: "zone_11", name: "Thiruvananthapuram North" },
-  { _id: "zone_12", name: "Wayanad East" },
-  { _id: "zone_13", name: "Kannur South" },
-  { _id: "zone_14", name: "Kasargod North" },
-  { _id: "zone_15", name: "Idukki Central" },
-];
+const extractErrorMessage = (error: unknown): string => {
+  if (axios.isAxiosError(error)) {
+    const data = error.response?.data as
+      | { message?: string; errors?: { field: string; message: string }[] }
+      | undefined;
 
-const DUMMY_COORDINATORS: Record<string, { _id: string; name: string }[]> = {
-  zone_1: [
-    { _id: "coord_1_1", name: "Rajesh Kumar" },
-    { _id: "coord_1_2", name: "Sreedevi Nair" },
-    { _id: "coord_1_3", name: "Manoj Pillai" },
-  ],
-  zone_2: [
-    { _id: "coord_2_1", name: "Lakshmi Menon" },
-    { _id: "coord_2_2", name: "Suresh Gopi" },
-    { _id: "coord_2_3", name: "Anitha Raj" },
-  ],
-  zone_3: [
-    { _id: "coord_3_1", name: "Muhammed Ali" },
-    { _id: "coord_3_2", name: "Fathima Beevi" },
-    { _id: "coord_3_3", name: "Abdul Rahman" },
-  ],
-  zone_4: [
-    { _id: "coord_4_1", name: "Krishnan Nair" },
-    { _id: "coord_4_2", name: "Saraswathy Amma" },
-    { _id: "coord_4_3", name: "Gopalakrishnan" },
-  ],
-  zone_5: [
-    { _id: "coord_5_1", name: "Vijayan Thampi" },
-    { _id: "coord_5_2", name: "Sreekumari" },
-    { _id: "coord_5_3", name: "Ravindranath" },
-  ],
-  zone_6: [
-    { _id: "coord_6_1", name: "George Mathew" },
-    { _id: "coord_6_2", name: "Mary Thomas" },
-    { _id: "coord_6_3", name: "Joseph Antony" },
-  ],
-  zone_7: [
-    { _id: "coord_7_1", name: "Jacob Eapen" },
-    { _id: "coord_7_2", name: "Elizabeth Abraham" },
-    { _id: "coord_7_3", name: "Thomas Kurian" },
-  ],
-  zone_8: [
-    { _id: "coord_8_1", name: "Santhosh Kumar" },
-    { _id: "coord_8_2", name: "Sobhana Pillai" },
-    { _id: "coord_8_3", name: "Ramesh Nair" },
-  ],
-  zone_9: [
-    { _id: "coord_9_1", name: "Aravindakshan" },
-    { _id: "coord_9_2", name: "Bindu Menon" },
-    { _id: "coord_9_3", name: "Chandrasekharan" },
-  ],
-  zone_10: [
-    { _id: "coord_10_1", name: "Sukumaran" },
-    { _id: "coord_10_2", name: "Devaki Amma" },
-    { _id: "coord_10_3", name: "Balakrishnan" },
-  ],
-  zone_11: [
-    { _id: "coord_11_1", name: "Padmanabhan" },
-    { _id: "coord_11_2", name: "Saroja Devi" },
-    { _id: "coord_11_3", name: "Narayanan Nair" },
-  ],
-  zone_12: [
-    { _id: "coord_12_1", name: "Vivek Raj" },
-    { _id: "coord_12_2", name: "Priya Krishnan" },
-    { _id: "coord_12_3", name: "Deepak Menon" },
-  ],
-  zone_13: [
-    { _id: "coord_13_1", name: "Radhakrishnan" },
-    { _id: "coord_13_2", name: "Lalitha Nair" },
-    { _id: "coord_13_3", name: "Vasudevan" },
-  ],
-  zone_14: [
-    { _id: "coord_14_1", name: "Rajan Pai" },
-    { _id: "coord_14_2", name: "Shobha Shetty" },
-    { _id: "coord_14_3", name: "Mohan Rao" },
-  ],
-  zone_15: [
-    { _id: "coord_15_1", name: "Sajeev Thomas" },
-    { _id: "coord_15_2", name: "Anu George" },
-    { _id: "coord_15_3", name: "Biju Abraham" },
-  ],
-};
-
-const extractErrorMessage = (error: any): string => {
+    if (data?.errors?.length) {
+      return data.errors.map((e) => e.message).join(", ");
+    }
+    if (data?.message) return data.message;
+    return error.message;
+  }
   if (error instanceof Error) return error.message;
-  if (typeof error === "string") return error;
   return "An unexpected error occurred. Please try again.";
 };
 
@@ -343,7 +258,11 @@ export function MemberRegistrationForm() {
   const [applicationId, setApplicationId] = useState<string | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
-  const zones = DUMMY_ZONES;
+  const { data: zones = [] } = useQuery({
+    queryKey: ["public", "zones"],
+    queryFn: publicService.getZones,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const {
     register,
@@ -357,12 +276,14 @@ export function MemberRegistrationForm() {
   });
 
   const selectedZone = watch("zone");
-
-  const coordinators = selectedZone && selectedZone !== NOT_IN_LIST
-    ? DUMMY_COORDINATORS[selectedZone] || []
-    : [];
-
   const zoneIsNotInList = selectedZone === NOT_IN_LIST;
+
+  const { data: coordinators = [] } = useQuery({
+    queryKey: ["public", "coordinators", selectedZone],
+    queryFn: () => publicService.getCoordinators(selectedZone),
+    enabled: Boolean(selectedZone) && !zoneIsNotInList,
+    staleTime: 5 * 60 * 1000,
+  });
   const coordinatorValue = watch("coordinator");
   const coordinatorIsNotInList = coordinatorValue === NOT_IN_LIST;
 
@@ -407,31 +328,10 @@ export function MemberRegistrationForm() {
 
       formData.append("birthYear", String(values.birthYear || ""));
 
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/members/public/register`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-
-      if (response.data.success) {
-        setApplicationId(response.data.data.applicationId);
-      } else {
-        setServerError(response.data.message || "Registration failed");
-      }
-    } catch (error: any) {
-      if (error.response?.data?.errors) {
-        const validationErrors = error.response.data.errors;
-        const errorMessages = Object.values(validationErrors).flat().join(", ");
-        setServerError(errorMessages);
-      } else if (error.response?.data?.message) {
-        setServerError(error.response.data.message);
-      } else {
-        setServerError(extractErrorMessage(error));
-      }
+      const result = await publicService.registerMember(formData);
+      setApplicationId(result.applicationId);
+    } catch (error) {
+      setServerError(extractErrorMessage(error));
     }
   };
 
@@ -490,7 +390,8 @@ export function MemberRegistrationForm() {
               className="flex h-24 w-24 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-brass bg-white text-brass transition hover:bg-brass/5"
             >
               {photoPreview ? (
-                <Image src={photoPreview} alt="Preview" className="h-full w-full object-cover" />
+                // eslint-disable-next-line @next/next/no-img-element -- object-URL preview, next/image can't optimize blob: URLs
+                <img src={photoPreview} alt="Preview" className="h-full w-full object-cover" />
               ) : (
                 <FiCamera size={22} />
               )}

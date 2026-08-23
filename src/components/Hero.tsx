@@ -37,7 +37,7 @@ export default function Hero() {
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
-              href="/committee"
+              href="/#committee"
               className="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-6 py-3 font-body text-sm font-semibold text-ink transition-all hover:border-green/30 hover:text-green"
             >
               <Users2 className="h-4 w-4" />

@@ -60,7 +60,7 @@ export default function AdminDashboardPage() {
     { key: "suspended", label: "Suspended", value: stats?.suspended, icon: ShieldAlert, tone: "danger" as const },
   ];
 
-  const toneStyles: Record<string, { bg: string; text: string }> = {
+  const toneStyles: Record<"default" | "warning" | "info" | "danger", { bg: string; text: string }> = {
     default: { bg: "bg-primary/10", text: "text-primary" },
     warning: { bg: "bg-amber-50", text: "text-amber-600" },
     info: { bg: "bg-blue-50", text: "text-blue-600" },

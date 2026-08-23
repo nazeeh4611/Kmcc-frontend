@@ -64,13 +64,17 @@ export default function HeroBanner() {
                   src={banner.url}
                   alt=""
                   aria-hidden="true"
-                  className="absolute inset-0 h-full w-full scale-110 object-cover blur-2xl opacity-60"
+                  fill
+                  sizes="100vw"
+                  className="scale-110 object-cover blur-2xl opacity-60"
                 />
                 <div className="absolute inset-0 bg-green-900/40" />
                 <Image
                   src={banner.url}
                   alt={banner.alt}
-                  className="relative z-10 h-full w-full object-contain"
+                  fill
+                  sizes="100vw"
+                  className="relative z-10 object-contain"
                 />
               </div>
             ))}

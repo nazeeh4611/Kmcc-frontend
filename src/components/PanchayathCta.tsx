@@ -5,7 +5,7 @@ import { ArrowRight } from "lucide-react";
 
 export default function PanchayathCta() {
   return (
-    <section className="bg-paper px-4 pb-20 sm:px-6 lg:px-8">
+    <section id="panchayaths" className="scroll-mt-24 bg-paper px-4 pb-20 sm:px-6 lg:px-8">
       <div className="relative mx-auto max-w-5xl overflow-hidden rounded-2xl bg-green-900 px-6 py-16 text-center shadow-card-lg sm:px-10">
         <div className="dot-grid absolute inset-0 opacity-30" />
         <div className="relative">

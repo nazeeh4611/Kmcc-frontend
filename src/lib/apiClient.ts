@@ -66,7 +66,9 @@ apiClient.interceptors.response.use(
     const url = originalRequest?.url ?? "";
 
     const isAuthEndpoint =
-      url.includes("/auth/login") || url.includes("/auth/refresh");
+      url.includes("/auth/admin/login") ||
+      url.includes("/auth/member/login") ||
+      url.includes("/auth/refresh");
 
     if (
       status === 401 &&

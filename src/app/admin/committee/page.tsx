@@ -486,9 +486,9 @@ export default function AdminCommitteePage() {
             {filteredMembers.map((member: any) => (
               <Card key={member._id} className="overflow-hidden border-border shadow-sm hover:shadow-md transition-shadow">
                 <div className="relative">
-                  <div className="aspect-video bg-primary/5 flex items-center justify-center">
+                  <div className="relative aspect-video bg-primary/5 flex items-center justify-center">
                     {member.photo?.url ? (
-                      <Image src={member.photo.url} alt={member.name} className="h-full w-full object-cover" />
+                      <Image src={member.photo.url} alt={member.name} fill sizes="(min-width: 1024px) 33vw, 50vw" className="object-cover" />
                     ) : (
                       <Users className="h-16 w-16 text-muted-foreground/30" />
                     )}
@@ -593,11 +593,6 @@ const handleSubmit = (e: React.FormEvent) => {
   });
   if (photo) formData.append("photo", photo);
 
-  console.log("photo state:", photo);
-  for (const pair of formData.entries()) {
-    console.log("FormData entry:", pair[0], pair[1]);
-  }
-
   mutation.mutate(formData);
 };
 
@@ -689,7 +684,8 @@ const handleSubmit = (e: React.FormEvent) => {
                 className="rounded-xl"
               />
               {photoPreview && (
-                <Image
+                // eslint-disable-next-line @next/next/no-img-element -- may be a local blob: object URL, which next/image can't proxy
+                <img
                   src={photoPreview}
                   alt="Preview"
                   className="mt-2 h-20 w-20 rounded-xl object-cover border border-border"

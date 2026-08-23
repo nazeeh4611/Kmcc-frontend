@@ -3,7 +3,7 @@ import Image from "next/image";
 
 export default function AboutMission() {
   return (
-    <section className="bg-white px-4 py-20 sm:px-6 lg:px-8">
+    <section id="about" className="scroll-mt-24 bg-white px-4 py-20 sm:px-6 lg:px-8">
       <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-16">
         {/* Left side - Content */}
         <div>

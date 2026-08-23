@@ -311,7 +311,7 @@ export default function AdminBannersPage() {
               {banners.map((banner, index) => (
                 <Card key={banner.id} className="overflow-hidden border-border shadow-sm hover:shadow-md transition-shadow group">
                   <div className="relative aspect-video bg-primary/5">
-                    <Image src={banner.url} alt={banner.alt} className="h-full w-full object-cover" />
+                    <Image src={banner.url} alt={banner.alt} fill sizes="(min-width: 1024px) 33vw, 50vw" className="object-cover" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     <Button
                       onClick={() => handleDelete(banner.id)}

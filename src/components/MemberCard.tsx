@@ -21,11 +21,15 @@ export default function MemberCard({ member, ink }: MemberCardProps) {
   return (
     <div className="group flex items-center gap-5 rounded-2xl border border-line bg-white p-5 shadow-card transition-all duration-200 hover:-translate-y-1 hover:shadow-card-lg">
       {member.photo?.url ? (
-        <Image
-          src={member.photo.url}
-          alt={member.name}
-          className="h-24 w-24 shrink-0 rounded-2xl object-cover"
-        />
+        <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl">
+          <Image
+            src={member.photo.url}
+            alt={member.name}
+            fill
+            sizes="96px"
+            className="object-cover"
+          />
+        </div>
       ) : (
         <div
           className={`flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl font-display text-2xl font-semibold text-white ${

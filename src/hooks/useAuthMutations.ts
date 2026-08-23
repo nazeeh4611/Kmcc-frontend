@@ -8,36 +8,17 @@ import type {
   MemberLoginInput,
 } from "@/lib/validators/authSchemas";
 
-console.log("useAuthMutations.ts loaded");
-console.log("authService:", authService);
-
 export function useAdminLogin() {
   const queryClient = useQueryClient();
 
-  console.log("useAdminLogin hook executed");
-
   return useMutation({
-    mutationFn: async (payload: AdminLoginInput) => {
-      console.log("Admin login payload:", payload);
-
-      const result = await authService.adminLogin(payload);
-
-      console.log("Admin login result:", result);
-
-      return result;
-    },
+    mutationFn: (payload: AdminLoginInput) => authService.adminLogin(payload),
 
     onSuccess: (admin) => {
-      console.log("Login successful:", admin);
-
       queryClient.setQueryData(SESSION_QUERY_KEY, {
         type: "admin",
         user: admin,
       });
-    },
-
-    onError: (error) => {
-      console.error("Login mutation error:", error);
     },
   });
 }
@@ -46,27 +27,13 @@ export function useMemberLogin() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (payload: MemberLoginInput) => {
-      console.log("Member login payload:", payload);
-
-      const result = await authService.memberLogin(payload);
-
-      console.log("Member login result:", result);
-
-      return result;
-    },
+    mutationFn: (payload: MemberLoginInput) => authService.memberLogin(payload),
 
     onSuccess: (member) => {
-      console.log("Member login successful:", member);
-
       queryClient.setQueryData(SESSION_QUERY_KEY, {
         type: "member",
         user: member,
       });
-    },
-
-    onError: (error) => {
-      console.error("Member login error:", error);
     },
   });
 }

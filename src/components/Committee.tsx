@@ -14,7 +14,7 @@ export default function Committee() {
   const year = data?.year;
 
   return (
-    <section id="committee" className="bg-white px-4 pb-20 sm:px-6 lg:px-8">
+    <section id="committee" className="scroll-mt-24 bg-white px-4 pb-20 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <div className="rounded-2xl bg-green-900 px-8 py-7 text-center shadow-card-lg">
           <span className="font-utility text-[11px] font-semibold uppercase tracking-[0.25em] text-brass">
