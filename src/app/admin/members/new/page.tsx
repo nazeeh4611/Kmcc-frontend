@@ -263,11 +263,20 @@ export default function NewMemberPage() {
   const { data: zones } = useQuery({ queryKey: ["meta", "zones"], queryFn: metaService.listZones });
   const { data: plans } = useQuery({ queryKey: ["meta", "plans"], queryFn: metaService.listMembershipPlans });
 
+  const [created, setCreated] = useState<{ memberId: string; temporaryPassword?: string } | null>(null);
+
   const createMutation = useMutation({
     mutationFn: (formData: FormData) => memberService.create(formData),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["members"] });
-      router.push(`/admin/members/${data.member._id}`);
+      if (data.temporaryPassword) {
+        // The password is only ever shown here — it's hashed in the DB and
+        // not recoverable afterwards, so don't navigate away until the admin
+        // has seen and copied it.
+        setCreated({ memberId: data.member._id, temporaryPassword: data.temporaryPassword });
+      } else {
+        router.push(`/admin/members/${data.member._id}`);
+      }
     },
     onError: (err) => setError(extractErrorMessage(err)),
   });
@@ -293,6 +302,63 @@ export default function NewMemberPage() {
 
     createMutation.mutate(formData);
   };
+
+  if (created) {
+    return (
+      <div className="min-h-screen bg-surface">
+        <AdminNav />
+        <main className="mx-auto max-w-xl px-6 py-8">
+          <Card className="overflow-hidden border-border shadow-sm">
+            <CardHeader className="border-b border-border bg-primary/5">
+              <CardTitle>Member Created</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 pt-6">
+              <p className="text-sm text-muted-foreground">
+                Save this password now — it&apos;s only shown once and can&apos;t be recovered later.
+                Share it with the member (or reset it from their profile if it&apos;s lost).
+              </p>
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Temporary Password</p>
+                <p className="mt-1 font-mono text-2xl font-bold text-foreground">{created.temporaryPassword}</p>
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setCreated(null);
+                    setForm({
+                      fullName: "",
+                      phone: "",
+                      fatherName: "",
+                      address: "",
+                      bloodGroup: "",
+                      workingCountry: "",
+                      zone: "",
+                      committeeRole: "",
+                      unit: "",
+                      membershipType: "",
+                    });
+                    setPhoto(null);
+                  }}
+                  className="rounded-xl"
+                >
+                  Add Another Member
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => router.push(`/admin/members/${created.memberId}`)}
+                  className="rounded-xl bg-primary hover:bg-primary/90"
+                >
+                  View Member
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-surface">

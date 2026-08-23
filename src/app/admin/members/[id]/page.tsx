@@ -368,11 +368,11 @@ export default function MemberDetailPage() {
     queryClient.invalidateQueries({ queryKey: ["members", "detail", id] });
   };
 
-  const withHandlers = <T,>(mutationFn: () => Promise<T>, successMsg: string) =>
+  const withHandlers = <T,>(mutationFn: () => Promise<T>, successMsg: string | ((result: T) => string)) =>
     mutationFn()
-      .then(() => {
+      .then((result) => {
         setError(null);
-        setNotice(successMsg);
+        setNotice(typeof successMsg === "function" ? successMsg(result) : successMsg);
         invalidate();
       })
       .catch((err) => setError(extractErrorMessage(err)));
@@ -878,13 +878,13 @@ function ActionsPanel({
   memberId: string;
   member: NonNullable<Awaited<ReturnType<typeof memberService.getById>>>;
   plans: MembershipPlan[];
-  withHandlers: <T>(mutationFn: () => Promise<T>, successMsg: string) => Promise<void>;
+  withHandlers: <T>(mutationFn: () => Promise<T>, successMsg: string | ((result: T) => string)) => Promise<void>;
 }) {
   const router = useRouter();
   const [renewPlan, setRenewPlan] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const run = async (fn: () => Promise<unknown>, msg: string) => {
+  const run = async <T,>(fn: () => Promise<T>, msg: string | ((result: T) => string)) => {
     setBusy(true);
     await withHandlers(fn, msg);
     setBusy(false);
@@ -920,7 +920,15 @@ function ActionsPanel({
           <Button
             variant="outline"
             disabled={busy}
-            onClick={() => run(() => memberService.resetPassword(memberId), "Password reset successfully")}
+            onClick={() =>
+              run(
+                () => memberService.resetPassword(memberId),
+                (result) =>
+                  result?.temporaryPassword
+                    ? `Password reset. New password: ${result.temporaryPassword}`
+                    : "Password reset successfully"
+              )
+            }
             className="rounded-xl"
           >
             🔑 Reset Password

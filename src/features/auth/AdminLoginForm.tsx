@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,13 +12,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useAuth } from "@/store/authContext";
 
 export function AdminLoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { session, isLoading: isSessionLoading } = useAuth();
   const adminLogin = useAdminLogin();
   const [serverError, setServerError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+
+  const alreadySignedIn = !isSessionLoading && session?.type === "admin";
+
+  useEffect(() => {
+    if (alreadySignedIn) {
+      router.replace(searchParams.get("redirect") || "/admin/dashboard");
+    }
+  }, [alreadySignedIn, router, searchParams]);
 
   const {
     register,
@@ -44,6 +54,14 @@ export function AdminLoginForm() {
   };
 
   const pending = isSubmitting || adminLogin.isPending;
+
+  if (isSessionLoading || alreadySignedIn) {
+    return (
+      <div className="flex h-40 w-full max-w-[400px] items-center justify-center">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
+      </div>
+    );
+  }
 
   return (
     <Card className="w-full max-w-[400px] border-line bg-white/95 backdrop-blur-sm shadow-2xl shadow-primary/5">

@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, UserCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { useAuth } from "@/store/authContext";
 
 const links = [
   { label: "Home", href: "/" },
@@ -17,6 +18,12 @@ const links = [
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const { session, isAuthenticated } = useAuth();
+
+  const accountHref =
+    isAuthenticated && session?.type === "admin" ? "/admin/dashboard" : "/dashboard";
+  const accountLabel =
+    isAuthenticated && session?.type === "admin" ? "Admin Dashboard" : "My Dashboard";
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -65,18 +72,30 @@ export default function Navbar() {
         </nav>
 
         <div className="hidden lg:flex lg:items-center lg:gap-3">
-          <Link
-            href="/login"
-            className="rounded-lg border border-line px-4 py-2 font-body text-sm font-medium text-ink transition-all hover:border-green/40 hover:text-green"
-          >
-            Member Login
-          </Link>
-          <Link
-            href="/register"
-            className="rounded-lg bg-green px-4 py-2 font-body text-sm font-semibold text-white shadow-sm transition-colors hover:bg-green-800"
-          >
-            Apply for Membership
-          </Link>
+          {isAuthenticated ? (
+            <Link
+              href={accountHref}
+              className="inline-flex items-center gap-2 rounded-lg bg-green px-4 py-2 font-body text-sm font-semibold text-white shadow-sm transition-colors hover:bg-green-800"
+            >
+              <UserCircle className="h-4 w-4" />
+              {accountLabel}
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="rounded-lg border border-line px-4 py-2 font-body text-sm font-medium text-ink transition-all hover:border-green/40 hover:text-green"
+              >
+                Member Login
+              </Link>
+              <Link
+                href="/register"
+                className="rounded-lg bg-green px-4 py-2 font-body text-sm font-semibold text-white shadow-sm transition-colors hover:bg-green-800"
+              >
+                Apply for Membership
+              </Link>
+            </>
+          )}
         </div>
 
         <button
@@ -101,18 +120,32 @@ export default function Navbar() {
             </Link>
           ))}
           <div className="mt-3 flex flex-col gap-2">
-            <Link
-              href="/login"
-              className="rounded-lg border border-line px-5 py-2.5 text-center font-body text-sm font-medium text-ink"
-            >
-              Member Login
-            </Link>
-            <Link
-              href="/register"
-              className="rounded-lg bg-green px-5 py-2.5 text-center font-body text-sm font-semibold text-white"
-            >
-              Apply for Membership
-            </Link>
+            {isAuthenticated ? (
+              <Link
+                href={accountHref}
+                onClick={() => setOpen(false)}
+                className="rounded-lg bg-green px-5 py-2.5 text-center font-body text-sm font-semibold text-white"
+              >
+                {accountLabel}
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  onClick={() => setOpen(false)}
+                  className="rounded-lg border border-line px-5 py-2.5 text-center font-body text-sm font-medium text-ink"
+                >
+                  Member Login
+                </Link>
+                <Link
+                  href="/register"
+                  onClick={() => setOpen(false)}
+                  className="rounded-lg bg-green px-5 py-2.5 text-center font-body text-sm font-semibold text-white"
+                >
+                  Apply for Membership
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}

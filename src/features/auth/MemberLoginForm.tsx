@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMemberLogin } from "@/hooks/useAuthMutations";
 import { extractErrorMessage } from "@/lib/apiClient";
 import { memberLoginSchema, type MemberLoginInput } from "@/lib/validators/authSchemas";
+import { useAuth } from "@/store/authContext";
 
 const Button = ({
   children,
@@ -396,9 +397,19 @@ const FiEyeOff = ({ size = 20, className = "" }) => (
 export function MemberLoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { session, isLoading: isSessionLoading } = useAuth();
   const [serverError, setServerError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [showForgotHelp, setShowForgotHelp] = useState(false);
   const memberLogin = useMemberLogin();
+
+  const alreadySignedIn = !isSessionLoading && session?.type === "member";
+
+  useEffect(() => {
+    if (alreadySignedIn) {
+      router.replace(searchParams.get("redirect") || "/dashboard");
+    }
+  }, [alreadySignedIn, router, searchParams]);
 
   const {
     register,
@@ -422,6 +433,14 @@ export function MemberLoginForm() {
       setServerError(extractErrorMessage(error));
     }
   };
+
+  if (isSessionLoading || alreadySignedIn) {
+    return (
+      <section className="flex min-h-screen items-center justify-center bg-[#f8faf8]">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-green/20 border-t-green" />
+      </section>
+    );
+  }
 
   return (
     <section className="min-h-screen bg-[#f8faf8] pt-20 pb-16 flex items-center justify-center px-4 sm:px-6">
@@ -517,13 +536,20 @@ export function MemberLoginForm() {
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="password">Password</Label>
-                      <a
-                        href="/forgot-password"
+                      <button
+                        type="button"
+                        onClick={() => setShowForgotHelp((v) => !v)}
                         className="font-body text-xs text-green/70 transition-colors hover:text-green hover:underline font-medium"
                       >
                         Forgot password?
-                      </a>
+                      </button>
                     </div>
+                    {showForgotHelp && (
+                      <p className="rounded-lg bg-green/5 px-3 py-2 font-body text-xs text-slate/80">
+                        Passwords are reset by your panchayath coordinator or office admin. Please contact
+                        them with your Membership ID to get a new password.
+                      </p>
+                    )}
                     <div className="relative group">
                       <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate/40 transition-colors group-focus-within:text-green">
                         <FiLock className="h-5 w-5" />
