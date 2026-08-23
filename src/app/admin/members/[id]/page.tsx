@@ -286,8 +286,16 @@ const memberService = {
     const response = await apiClient.delete(`/members/${id}`);
     return response.data;
   },
-  downloadCard: (id: string) => {
-    window.open(`${process.env.NEXT_PUBLIC_API_URL}/members/${id}/card`, "_blank");
+  downloadCard: async (id: string) => {
+    const response = await apiClient.get(`/members/${id}/card`, { responseType: "blob" });
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `${id}-card.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
   },
 };
 

@@ -2,7 +2,7 @@ import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { tokenStorage } from "@/lib/tokenStorage";
 
 export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3003/api";
+  process.env.NEXT_PUBLIC_API_URL || "https://kmcc-backend.onrender.com/api";
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,

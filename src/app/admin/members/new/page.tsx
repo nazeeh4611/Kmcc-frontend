@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
+import { apiClient } from "@/lib/apiClient";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -215,21 +215,21 @@ const selectClass =
 
 const memberService = {
   create: async (formData: FormData) => {
-    const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/admin/members`, formData, {
+    const response = await apiClient.post("/members", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
-    return response.data;
+    return response.data.data;
   },
 };
 
 const metaService = {
   listZones: async () => {
-    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/public/meta/zones`);
-    return response.data;
+    const response = await apiClient.get("/zones");
+    return response.data.data.zones;
   },
   listMembershipPlans: async () => {
-    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/public/meta/plans`);
-    return response.data;
+    const response = await apiClient.get("/membership-plans");
+    return response.data.data.plans;
   },
 };
 

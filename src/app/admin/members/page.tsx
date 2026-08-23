@@ -293,10 +293,18 @@ const memberService = {
     return response.data.data ?? response.data;
   },
   exportExcel: async (status?: string) => {
-    const url = status
-      ? `${process.env.NEXT_PUBLIC_API_URL}/admin/members/export?status=${status}`
-      : `${process.env.NEXT_PUBLIC_API_URL}/admin/members/export`;
-    window.open(url, "_blank");
+    const response = await apiClient.get("/members/export", {
+      params: status ? { status } : undefined,
+      responseType: "blob",
+    });
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `members-export-${Date.now()}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
   },
 };
 
