@@ -1,5 +1,5 @@
 // services/committeeService.ts
-import { apiClient } from "@/lib/apiClient";
+import { adminApiClient as apiClient } from "@/lib/adminApiClient";
 
 export const committeeService = {
   list: async () => {

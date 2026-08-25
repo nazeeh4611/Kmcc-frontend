@@ -1,4 +1,4 @@
-import { apiClient } from "@/lib/apiClient";
+import { publicApiClient as apiClient } from "@/lib/publicApiClient";
 
 export interface CommitteeMember {
   _id: string;

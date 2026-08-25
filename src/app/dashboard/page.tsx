@@ -15,39 +15,37 @@ import {
   LogOut,
   Home,
   User as UserIcon,
+  Users,
+  Cake,
 } from "lucide-react";
-import { useAuth } from "@/store/authContext";
-import { authService } from "@/services/authService";
-import { extractErrorMessage } from "@/lib/apiClient";
+import { useMemberAuth } from "@/store/memberAuthContext";
+import { memberAuthService } from "@/services/authService";
+import { extractErrorMessage } from "@/lib/memberApiClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MemberStatusBadge } from "@/components/MemberStatusBadge";
-import type { Zone, Coordinator, MembershipPlan } from "@/types";
 import { useState } from "react";
 
-const asName = (value: string | Zone | Coordinator | MembershipPlan | null | undefined, fallback = "—") => {
-  if (!value) return fallback;
-  if (typeof value === "string") return value;
-  return "title" in value ? value.title : value.name;
-};
+const workingCountryLabel = (member: { workingCountry?: string; workingCountryOther?: string | null }) =>
+  member.workingCountry === "Other" ? member.workingCountryOther || "Other" : member.workingCountry || "—";
 
 export default function MemberDashboardPage() {
   const router = useRouter();
-  const { logout, isLoggingOut } = useAuth();
+  const { logout, isLoggingOut } = useMemberAuth();
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
 
   const { data: member, isLoading } = useQuery({
     queryKey: ["members", "me"],
-    queryFn: authService.getMyMembershipDetails,
+    queryFn: memberAuthService.getMyMembershipDetails,
   });
 
   const handleDownloadCard = async () => {
     setDownloadError(null);
     setIsDownloading(true);
     try {
-      await authService.downloadMembershipCard();
+      await memberAuthService.downloadMembershipCard();
     } catch (error) {
       setDownloadError(extractErrorMessage(error));
     } finally {
@@ -125,10 +123,45 @@ export default function MemberDashboardPage() {
             <div className="flex flex-col gap-6 lg:col-span-2">
               <Card className="animate-in-up p-6">
                 <CardHeader className="p-0 pb-4">
-                  <CardTitle>Membership Details</CardTitle>
+                  <CardTitle>Personal Information</CardTitle>
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 gap-4 p-0 sm:grid-cols-2">
-                  <DetailRow icon={Calendar} label="Membership Type" value={asName(member.membershipType)} />
+                  <DetailRow icon={Users} label="Father's Name" value={member.fatherName ?? "—"} />
+                  <DetailRow
+                    icon={Cake}
+                    label="Date of Birth"
+                    value={member.dob ? new Date(member.dob).toLocaleDateString() : "—"}
+                  />
+                  <DetailRow icon={Droplet} label="Blood Group" value={member.bloodGroup} />
+                </CardContent>
+              </Card>
+
+              <Card className="animate-in-up p-6">
+                <CardHeader className="p-0 pb-4">
+                  <CardTitle>Contact Information</CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 gap-4 p-0 sm:grid-cols-2">
+                  <DetailRow icon={Phone} label="Home Country Number" value={member.homeCountryNumber || "—"} />
+                  <DetailRow icon={Phone} label="Working Country Number" value={member.workingCountryNumber || "—"} />
+                  <DetailRow icon={Mail} label="Email" value={member.email || "—"} />
+                  <DetailRow icon={MapPin} label="Address" value={member.address ?? "—"} />
+                  <DetailRow icon={MapPin} label="Zone" value={member.zone ?? "—"} />
+                  <DetailRow icon={Globe2} label="Working Country" value={workingCountryLabel(member)} />
+                </CardContent>
+              </Card>
+
+              <Card className="animate-in-up p-6">
+                <CardHeader className="p-0 pb-4">
+                  <CardTitle>Membership</CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 gap-4 p-0 sm:grid-cols-2">
+                  <DetailRow icon={Hash} label="Membership ID" value={member.membershipId} />
+                  <DetailRow icon={Calendar} label="Status" value={member.membershipStatus} />
+                  <DetailRow
+                    icon={Calendar}
+                    label="Start Date"
+                    value={member.membershipStart ? new Date(member.membershipStart).toLocaleDateString() : "—"}
+                  />
                   <DetailRow
                     icon={Calendar}
                     label="Expires On"
@@ -139,21 +172,6 @@ export default function MemberDashboardPage() {
                     label="Days Remaining"
                     value={member.isExpired ? "Expired" : `${member.daysRemaining} days`}
                   />
-                  <DetailRow icon={Globe2} label="Working Country" value={member.workingCountry ?? "—"} />
-                  <DetailRow icon={MapPin} label="Native Place" value={member.nativePlace ?? "—"} />
-                  <DetailRow icon={MapPin} label="Zone" value={asName(member.zone, member.zoneOther ?? "—")} />
-                </CardContent>
-              </Card>
-
-              <Card className="animate-in-up p-6">
-                <CardHeader className="p-0 pb-4">
-                  <CardTitle>Contact Information</CardTitle>
-                </CardHeader>
-                <CardContent className="grid grid-cols-1 gap-4 p-0 sm:grid-cols-2">
-                  <DetailRow icon={Phone} label="Phone" value={member.phone} />
-                  <DetailRow icon={Mail} label="Email" value={member.email || "—"} />
-                  <DetailRow icon={Droplet} label="Blood Group" value={member.bloodGroup} />
-                  <DetailRow icon={MapPin} label="Address" value={member.address ?? "—"} />
                 </CardContent>
               </Card>
             </div>

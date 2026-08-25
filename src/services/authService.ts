@@ -1,6 +1,8 @@
-import { apiClient, type ApiEnvelope } from "@/lib/apiClient";
-import { tokenStorage } from "@/lib/tokenStorage";
-import type { Admin, AuthSession, Member, SessionType } from "@/types";
+import { adminApiClient, type ApiEnvelope } from "@/lib/adminApiClient";
+import { memberApiClient } from "@/lib/memberApiClient";
+import { adminTokenStorage } from "@/lib/adminTokenStorage";
+import { memberTokenStorage } from "@/lib/memberTokenStorage";
+import type { Admin, Member } from "@/types";
 import type {
   AdminLoginInput,
   MemberLoginInput,
@@ -12,72 +14,39 @@ interface LoginTokens {
   refreshToken?: string;
 }
 
-export const authService = {
-  adminLogin: async (payload: AdminLoginInput): Promise<Admin> => {
-    const { data } = await apiClient.post<
-      ApiEnvelope<{ admin: Admin } & LoginTokens>
-    >("/auth/admin/login", payload);
+export const adminAuthService = {
+  login: async (payload: AdminLoginInput): Promise<Admin> => {
+    const { data } = await adminApiClient.post<ApiEnvelope<{ admin: Admin } & LoginTokens>>(
+      "/auth/admin/login",
+      payload
+    );
 
     const { admin, token, refreshToken } = data.data;
-
-    tokenStorage.setTokens(token, refreshToken);
+    adminTokenStorage.setTokens(token, refreshToken);
 
     return admin;
   },
 
-  memberLogin: async (payload: MemberLoginInput): Promise<Member> => {
-    const { data } = await apiClient.post<
-      ApiEnvelope<{ member: Member } & LoginTokens>
-    >("/auth/member/login", payload);
-
-    const { member, token, refreshToken } = data.data;
-
-    tokenStorage.setTokens(token, refreshToken);
-
-    return member;
-  },
-
   logout: async (): Promise<void> => {
     try {
-      await apiClient.post("/auth/logout");
+      await adminApiClient.post("/auth/admin/logout");
     } finally {
-      tokenStorage.clearTokens();
+      adminTokenStorage.clearTokens();
     }
   },
 
-  getSession: async (): Promise<AuthSession> => {
-    const { data } = await apiClient.get<
-      ApiEnvelope<{
-        user: Admin | Member;
-        type: SessionType;
-      }>
-    >("/auth/me");
-
-    return {
-      user: data.data.user,
-      type: data.data.type,
-    };
+  getCurrentAdmin: async (): Promise<Admin> => {
+    const { data } = await adminApiClient.get<ApiEnvelope<{ user: Admin }>>("/auth/admin/me");
+    return data.data.user;
   },
 
-  changePassword: async (
-    payload: ChangePasswordInput
-  ): Promise<string> => {
-    const { data } = await apiClient.post<ApiEnvelope<null>>(
-      "/auth/change-password",
-      payload
-    );
-
+  changePassword: async (payload: ChangePasswordInput): Promise<string> => {
+    const { data } = await adminApiClient.post<ApiEnvelope<null>>("/auth/change-password", payload);
     return data.message;
   },
 
   forgotPassword: async (email: string): Promise<string> => {
-    const { data } = await apiClient.post<ApiEnvelope<null>>(
-      "/auth/forgot-password",
-      {
-        email,
-      }
-    );
-
+    const { data } = await adminApiClient.post<ApiEnvelope<null>>("/auth/forgot-password", { email });
     return data.message;
   },
 
@@ -86,37 +55,56 @@ export const authService = {
     newPassword: string;
     confirmPassword: string;
   }): Promise<string> => {
-    const { data } = await apiClient.post<ApiEnvelope<null>>(
-      "/auth/reset-password",
+    const { data } = await adminApiClient.post<ApiEnvelope<null>>("/auth/reset-password", payload);
+    return data.message;
+  },
+};
+
+export const memberAuthService = {
+  login: async (payload: MemberLoginInput): Promise<Member> => {
+    const { data } = await memberApiClient.post<ApiEnvelope<{ member: Member } & LoginTokens>>(
+      "/auth/member/login",
       payload
     );
 
+    const { member, token, refreshToken } = data.data;
+    memberTokenStorage.setTokens(token, refreshToken);
+
+    return member;
+  },
+
+  logout: async (): Promise<void> => {
+    try {
+      await memberApiClient.post("/auth/member/logout");
+    } finally {
+      memberTokenStorage.clearTokens();
+    }
+  },
+
+  getCurrentMember: async (): Promise<Member> => {
+    const { data } = await memberApiClient.get<ApiEnvelope<{ user: Member }>>("/auth/member/me");
+    return data.data.user;
+  },
+
+  changePassword: async (payload: ChangePasswordInput): Promise<string> => {
+    const { data } = await memberApiClient.post<ApiEnvelope<null>>("/auth/change-password", payload);
     return data.message;
   },
 
   getMyMembershipDetails: async (): Promise<Member> => {
-    const { data } = await apiClient.get<ApiEnvelope<{ member: Member }>>(
-      "/members/me"
-    );
-
+    const { data } = await memberApiClient.get<ApiEnvelope<{ member: Member }>>("/members/me");
     return data.data.member;
   },
 
   downloadMembershipCard: async (): Promise<void> => {
-    const response = await apiClient.get("/members/me/card", {
+    const response = await memberApiClient.get("/members/me/card", {
       responseType: "blob",
     });
 
-    const blob = new Blob([response.data], {
-      type: "application/pdf",
-    });
-
+    const blob = new Blob([response.data], { type: "application/pdf" });
     const url = window.URL.createObjectURL(blob);
 
-    const disposition = response.headers["content-disposition"] as
-      | string
-      | undefined;
-
+    const disposition = response.headers["content-disposition"] as string | undefined;
     const match = disposition?.match(/filename="?([^"]+)"?/);
     const filename = match?.[1] ?? "membership-card.pdf";
 

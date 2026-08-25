@@ -1,7 +1,8 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { AuthProvider } from "@/store/authContext";
+import { AdminAuthProvider } from "@/store/adminAuthContext";
+import { MemberAuthProvider } from "@/store/memberAuthContext";
 import { useState } from "react";
 
 export default function Providers({
@@ -22,7 +23,9 @@ export default function Providers({
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>{children}</AuthProvider>
+      <AdminAuthProvider>
+        <MemberAuthProvider>{children}</MemberAuthProvider>
+      </AdminAuthProvider>
     </QueryClientProvider>
   );
 }

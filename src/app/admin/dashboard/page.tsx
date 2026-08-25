@@ -16,12 +16,11 @@ import {
   BadgeCheck,
 } from "lucide-react";
 import { AdminNav } from "@/components/AdminNav";
-import { useAuth } from "@/store/authContext";
+import { useAdminAuth } from "@/store/adminAuthContext";
 import { memberService } from "@/services/memberService";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import type { Admin } from "@/types";
 
 const QUICK_ACTIONS = [
   {
@@ -45,8 +44,7 @@ const QUICK_ACTIONS = [
 ];
 
 export default function AdminDashboardPage() {
-  const { session } = useAuth();
-  const admin = session?.user as Admin | undefined;
+  const { admin } = useAdminAuth();
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ["members", "stats"],

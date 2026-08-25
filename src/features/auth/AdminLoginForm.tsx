@@ -6,23 +6,23 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ShieldCheck, Mail, Lock, ArrowRight, Eye, EyeOff, ShieldAlert } from "lucide-react";
 import { useAdminLogin } from "@/hooks/useAuthMutations";
-import { extractErrorMessage } from "@/lib/apiClient";
+import { extractErrorMessage } from "@/lib/adminApiClient";
 import { adminLoginSchema, type AdminLoginInput } from "@/lib/validators/authSchemas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { useAuth } from "@/store/authContext";
+import { useAdminAuth } from "@/store/adminAuthContext";
 
 export function AdminLoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { session, isLoading: isSessionLoading } = useAuth();
+  const { isAuthenticated, isLoading: isSessionLoading } = useAdminAuth();
   const adminLogin = useAdminLogin();
   const [serverError, setServerError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
-  const alreadySignedIn = !isSessionLoading && session?.type === "admin";
+  const alreadySignedIn = !isSessionLoading && isAuthenticated;
 
   useEffect(() => {
     if (alreadySignedIn) {

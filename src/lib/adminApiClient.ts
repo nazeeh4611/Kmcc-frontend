@@ -1,19 +1,20 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
-import { tokenStorage } from "@/lib/tokenStorage";
+import { adminTokenStorage } from "@/lib/adminTokenStorage";
+import { API_BASE_URL } from "@/lib/publicApiClient";
 
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://kmcc-backend.onrender.com/api";
-
-export const apiClient = axios.create({
+// Authenticated client for admin-only endpoints. Reads/writes only the
+// admin token namespace and refreshes only against /auth/admin/refresh —
+// it never touches member tokens, so a member session elsewhere in the
+// same browser is completely unaffected by anything this client does.
+export const adminApiClient = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-apiClient.interceptors.request.use((config) => {
-  const token = tokenStorage.getAccessToken();
+adminApiClient.interceptors.request.use((config) => {
+  const token = adminTokenStorage.getAccessToken();
 
   if (token) {
     config.headers = config.headers ?? {};
@@ -33,17 +34,12 @@ const performRefresh = async (): Promise<string> => {
   if (!refreshPromise) {
     refreshPromise = axios
       .post<{ data: { accessToken: string; refreshToken?: string } }>(
-        `${API_BASE_URL}/auth/refresh`,
-        {
-          refreshToken: tokenStorage.getRefreshToken(),
-        },
-        {
-          withCredentials: true,
-        }
+        `${API_BASE_URL}/auth/admin/refresh`,
+        { refreshToken: adminTokenStorage.getRefreshToken() }
       )
       .then((res) => {
         const { accessToken, refreshToken } = res.data.data;
-        tokenStorage.setTokens(accessToken, refreshToken);
+        adminTokenStorage.setTokens(accessToken, refreshToken);
         return accessToken;
       })
       .finally(() => {
@@ -58,24 +54,16 @@ interface RetriableConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
 
-apiClient.interceptors.response.use(
+adminApiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const originalRequest = error.config as RetriableConfig | undefined;
     const status = error.response?.status;
     const url = originalRequest?.url ?? "";
 
-    const isAuthEndpoint =
-      url.includes("/auth/admin/login") ||
-      url.includes("/auth/member/login") ||
-      url.includes("/auth/refresh");
+    const isAuthEndpoint = url.includes("/auth/admin/login") || url.includes("/auth/admin/refresh");
 
-    if (
-      status === 401 &&
-      originalRequest &&
-      !originalRequest._retry &&
-      !isAuthEndpoint
-    ) {
+    if (status === 401 && originalRequest && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
 
       try {
@@ -84,12 +72,12 @@ apiClient.interceptors.response.use(
         originalRequest.headers = originalRequest.headers ?? {};
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
 
-        return apiClient(originalRequest);
+        return adminApiClient(originalRequest);
       } catch {
-        tokenStorage.clearTokens();
+        adminTokenStorage.clearTokens();
 
         if (typeof window !== "undefined") {
-          window.dispatchEvent(new CustomEvent("auth:session-expired"));
+          window.dispatchEvent(new CustomEvent("admin:session-expired"));
         }
 
         return Promise.reject(error);
@@ -100,26 +88,4 @@ apiClient.interceptors.response.use(
   }
 );
 
-export interface ApiEnvelope<T> {
-  success: boolean;
-  message: string;
-  data: T;
-  errors?: {
-    field: string;
-    message: string;
-  }[];
-}
-
-export const extractErrorMessage = (error: unknown): string => {
-  if (axios.isAxiosError(error)) {
-    const data = error.response?.data as ApiEnvelope<unknown> | undefined;
-
-    return (
-      data?.message ||
-      error.message ||
-      "Something went wrong. Please try again."
-    );
-  }
-
-  return "Something went wrong. Please try again.";
-};
+export { type ApiEnvelope, extractErrorMessage } from "@/lib/apiEnvelope";

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiClient, extractErrorMessage } from "@/lib/apiClient";
+import { adminApiClient as apiClient, extractErrorMessage } from "@/lib/adminApiClient";
 import { AdminNav } from "@/components/AdminNav";
 import Image from "next/image";
 const Card = ({

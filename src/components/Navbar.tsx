@@ -5,7 +5,8 @@ import { useEffect, useState } from "react";
 import { Menu, X, UserCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
-import { useAuth } from "@/store/authContext";
+import { useAdminAuth } from "@/store/adminAuthContext";
+import { useMemberAuth } from "@/store/memberAuthContext";
 
 const links = [
   { label: "Home", href: "/" },
@@ -18,12 +19,12 @@ const links = [
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { session, isAuthenticated } = useAuth();
+  const { isAuthenticated: isAdmin } = useAdminAuth();
+  const { isAuthenticated: isMember } = useMemberAuth();
 
-  const accountHref =
-    isAuthenticated && session?.type === "admin" ? "/admin/dashboard" : "/dashboard";
-  const accountLabel =
-    isAuthenticated && session?.type === "admin" ? "Admin Dashboard" : "My Dashboard";
+  const accountHref = isAdmin ? "/admin/dashboard" : "/dashboard";
+  const accountLabel = isAdmin ? "Admin Dashboard" : "My Dashboard";
+  const isAuthenticated = isAdmin || isMember;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);

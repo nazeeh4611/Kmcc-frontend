@@ -1,8 +1,9 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { authService } from "@/services/authService";
-import { SESSION_QUERY_KEY } from "@/store/authContext";
+import { adminAuthService, memberAuthService } from "@/services/authService";
+import { ADMIN_SESSION_QUERY_KEY } from "@/store/adminAuthContext";
+import { MEMBER_SESSION_QUERY_KEY } from "@/store/memberAuthContext";
 import type {
   AdminLoginInput,
   MemberLoginInput,
@@ -12,13 +13,10 @@ export function useAdminLogin() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: AdminLoginInput) => authService.adminLogin(payload),
+    mutationFn: (payload: AdminLoginInput) => adminAuthService.login(payload),
 
     onSuccess: (admin) => {
-      queryClient.setQueryData(SESSION_QUERY_KEY, {
-        type: "admin",
-        user: admin,
-      });
+      queryClient.setQueryData(ADMIN_SESSION_QUERY_KEY, admin);
     },
   });
 }
@@ -27,13 +25,10 @@ export function useMemberLogin() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: MemberLoginInput) => authService.memberLogin(payload),
+    mutationFn: (payload: MemberLoginInput) => memberAuthService.login(payload),
 
     onSuccess: (member) => {
-      queryClient.setQueryData(SESSION_QUERY_KEY, {
-        type: "member",
-        user: member,
-      });
+      queryClient.setQueryData(MEMBER_SESSION_QUERY_KEY, member);
     },
   });
 }

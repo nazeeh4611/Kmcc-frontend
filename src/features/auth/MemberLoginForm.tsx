@@ -5,9 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMemberLogin } from "@/hooks/useAuthMutations";
-import { extractErrorMessage } from "@/lib/apiClient";
+import { extractErrorMessage } from "@/lib/memberApiClient";
 import { memberLoginSchema, type MemberLoginInput } from "@/lib/validators/authSchemas";
-import { useAuth } from "@/store/authContext";
+import { useMemberAuth } from "@/store/memberAuthContext";
 
 const Button = ({
   children,
@@ -397,13 +397,13 @@ const FiEyeOff = ({ size = 20, className = "" }) => (
 export function MemberLoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { session, isLoading: isSessionLoading } = useAuth();
+  const { isAuthenticated, isLoading: isSessionLoading } = useMemberAuth();
   const [serverError, setServerError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showForgotHelp, setShowForgotHelp] = useState(false);
   const memberLogin = useMemberLogin();
 
-  const alreadySignedIn = !isSessionLoading && session?.type === "member";
+  const alreadySignedIn = !isSessionLoading && isAuthenticated;
 
   useEffect(() => {
     if (alreadySignedIn) {

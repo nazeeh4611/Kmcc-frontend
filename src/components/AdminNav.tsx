@@ -13,10 +13,9 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
-import { useAuth } from "@/store/authContext";
+import { useAdminAuth } from "@/store/adminAuthContext";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { Admin } from "@/types";
 
 const NAV_LINKS = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -27,8 +26,7 @@ const NAV_LINKS = [
 
 export function AdminNav() {
   const pathname = usePathname();
-  const { session, logout, isLoggingOut } = useAuth();
-  const admin = session?.user as Admin | undefined;
+  const { admin, logout, isLoggingOut } = useAdminAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (

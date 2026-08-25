@@ -2,27 +2,22 @@
 
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { useAuth } from "@/store/authContext";
+import { useMemberAuth } from "@/store/memberAuthContext";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { session, isLoading, isAuthenticated } = useAuth();
+  const { isLoading, isAuthenticated } = useMemberAuth();
 
   useEffect(() => {
     if (isLoading) return;
 
     if (!isAuthenticated) {
       router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
-      return;
     }
+  }, [isLoading, isAuthenticated, pathname, router]);
 
-    if (session?.type !== "member") {
-      router.replace("/login");
-    }
-  }, [isLoading, isAuthenticated, session, pathname, router]);
-
-  if (isLoading || !isAuthenticated || session?.type !== "member") {
+  if (isLoading || !isAuthenticated) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-surface">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />

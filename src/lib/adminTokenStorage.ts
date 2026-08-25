@@ -1,7 +1,11 @@
-const ACCESS_TOKEN_KEY = "access_token";
-const REFRESH_TOKEN_KEY = "refresh_token";
+// Admin session tokens live under their own localStorage keys, completely
+// separate from member tokens (see memberTokenStorage.ts), so an admin and
+// a member can be signed in on the same browser at the same time without
+// either session clobbering the other.
+const ACCESS_TOKEN_KEY = "admin_access_token";
+const REFRESH_TOKEN_KEY = "admin_refresh_token";
 
-export const tokenStorage = {
+export const adminTokenStorage = {
   getAccessToken(): string | null {
     if (typeof window === "undefined") return null;
     return window.localStorage.getItem(ACCESS_TOKEN_KEY);

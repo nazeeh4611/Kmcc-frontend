@@ -1,4 +1,4 @@
-import { apiClient, type ApiEnvelope } from "@/lib/apiClient";
+import { adminApiClient as apiClient, type ApiEnvelope } from "@/lib/adminApiClient";
 import type { FamilyMember, Member, PaginatedResult } from "@/types";
 
 export interface MemberListParams {

@@ -1,21 +1,8 @@
-import { apiClient, type ApiEnvelope } from "@/lib/apiClient";
-import type { Coordinator, Zone } from "@/types";
+import { publicApiClient, type ApiEnvelope } from "@/lib/publicApiClient";
 
 export const publicService = {
-  getZones: async () => {
-    const { data } = await apiClient.get<ApiEnvelope<{ zones: Zone[] }>>("/public/zones");
-    return data.data.zones;
-  },
-
-  getCoordinators: async (zoneId?: string) => {
-    const { data } = await apiClient.get<ApiEnvelope<{ coordinators: Coordinator[] }>>("/public/coordinators", {
-      params: zoneId ? { zone: zoneId } : undefined,
-    });
-    return data.data.coordinators;
-  },
-
   registerMember: async (formData: FormData) => {
-    const { data } = await apiClient.post<ApiEnvelope<{ applicationId: string; membershipId: string }>>(
+    const { data } = await publicApiClient.post<ApiEnvelope<{ applicationId: string; membershipId: string }>>(
       "/public/members/register",
       formData,
       { headers: { "Content-Type": "multipart/form-data" } }
@@ -24,7 +11,7 @@ export const publicService = {
   },
 
   verifyMember: async (membershipId: string) => {
-    const { data } = await apiClient.get<ApiEnvelope<{ member: unknown }>>(
+    const { data } = await publicApiClient.get<ApiEnvelope<{ member: unknown }>>(
       `/public/members/verify/${encodeURIComponent(membershipId)}`
     );
     return data.data.member;

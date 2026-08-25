@@ -3,195 +3,18 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiClient } from "@/lib/apiClient";
-import Link from "next/link";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { adminApiClient as apiClient } from "@/lib/adminApiClient";
+import { memberEditFormSchema, type MemberEditFormInput } from "@/lib/validators/memberSchema";
+import { MemberFormFields } from "@/features/member/MemberFormFields";
 import Image from "next/image";
-const AdminNav = () => {
-  return (
-    <nav className="bg-white border-b border-border px-6 py-4">
-      <div className="mx-auto max-w-6xl flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="font-display text-xl font-bold text-foreground">Admin Panel</span>
-        </div>
-
-<div className="flex items-center gap-4">
-  <Link
-    href="/admin/dashboard"
-    className="text-sm text-muted-foreground hover:text-primary transition-colors"
-  >
-    Dashboard
-  </Link>
-
-  <Link
-    href="/admin/members"
-    className="text-sm text-primary font-medium"
-  >
-    Members
-  </Link>
-
-  <Link
-    href="/admin/committee"
-    className="text-sm text-muted-foreground hover:text-primary transition-colors"
-  >
-    Committee
-  </Link>
-
-  <Link
-    href="/admin/banners"
-    className="text-sm text-muted-foreground hover:text-primary transition-colors"
-  >
-    Banners
-  </Link>
-</div>
-      </div>
-    </nav>
-  );
-};
-
-const Card = ({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) => {
-  return (
-    <div className={`bg-white rounded-xl border border-border shadow-sm ${className}`}>
-      {children}
-    </div>
-  );
-};
-
-const CardHeader = ({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) => {
-  return (
-    <div className={`px-6 py-4 border-b border-border ${className}`}>
-      {children}
-    </div>
-  );
-};
-
-const CardTitle = ({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) => {
-  return (
-    <h3 className={`text-lg font-semibold text-foreground ${className}`}>{children}</h3>
-  );
-};
-
-const CardContent = ({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) => {
-  return (
-    <div className={`px-6 py-4 ${className}`}>{children}</div>
-  );
-};
-
-const Button = ({
-  children,
-  type = "button",
-  variant = "default",
-  size = "default",
-  disabled = false,
-  className = "",
-  onClick,
-}: {
-  children: React.ReactNode;
-  type?: "button" | "submit" | "reset";
-  variant?: "default" | "outline" | "destructive" | "ghost";
-  size?: "default" | "sm";
-  disabled?: boolean;
-  className?: string;
-  onClick?: () => void;
-}) => {
-  const baseStyles = "inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none";
-  const variantStyles = {
-    default: "bg-primary text-white hover:bg-primary/90 focus:ring-primary/40",
-    outline: "border border-border bg-white text-foreground hover:bg-primary/5 hover:text-primary focus:ring-primary/40",
-    destructive: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500/40",
-    ghost: "text-muted-foreground hover:bg-primary/5 hover:text-primary",
-  };
-  const sizeStyles = {
-    default: "h-10 px-4 py-2 text-sm rounded-lg",
-    sm: "h-8 px-3 py-1 text-xs rounded-lg",
-  };
-
-  return (
-    <button
-      type={type}
-      disabled={disabled}
-      onClick={onClick}
-      className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
-    >
-      {children}
-    </button>
-  );
-};
-
-const Input = ({
-  id,
-  type = "text",
-  placeholder,
-  className = "",
-  required = false,
-  value,
-  onChange,
-  accept,
-}: {
-  id?: string;
-  type?: string;
-  placeholder?: string;
-  className?: string;
-  required?: boolean;
-  value?: string | number;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  accept?: string;
-}) => {
-  return (
-    <input
-      id={id}
-      type={type}
-      placeholder={placeholder}
-      required={required}
-      value={value}
-      onChange={onChange}
-      accept={accept}
-      className={`w-full h-11 rounded-xl border border-border bg-white/80 px-4 py-2 text-sm text-foreground shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary transition-all duration-200 ${className}`}
-    />
-  );
-};
-
-const Label = ({
-  children,
-  htmlFor,
-  className = "",
-}: {
-  children: React.ReactNode;
-  htmlFor?: string;
-  className?: string;
-}) => {
-  return (
-    <label
-      htmlFor={htmlFor}
-      className={`text-sm font-medium text-foreground ${className}`}
-    >
-      {children}
-    </label>
-  );
-};
+import { AdminNav } from "@/components/AdminNav";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { MemberStatusBadge } from "@/components/MemberStatusBadge";
 
 const Alert = ({
   children,
@@ -213,21 +36,6 @@ const Alert = ({
     >
       {children}
     </div>
-  );
-};
-
-const MemberStatusBadge = ({ status }: { status: string }) => {
-  const styles: Record<string, string> = {
-    active: "bg-green-100 text-green-700",
-    pending: "bg-amber-100 text-amber-700",
-    suspended: "bg-red-100 text-red-700",
-    expired: "bg-gray-100 text-gray-700",
-  };
-
-  return (
-    <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${styles[status] || styles.expired}`}>
-      {status.charAt(0).toUpperCase() + status.slice(1)}
-    </span>
   );
 };
 
@@ -482,7 +290,6 @@ export default function MemberDetailPage() {
                   <EditMemberForm
                     memberId={id}
                     initial={member}
-                    plans={plans ?? []}
                     onSaved={() => {
                       setIsEditing(false);
                       setNotice("Member updated successfully");
@@ -504,6 +311,19 @@ export default function MemberDetailPage() {
   );
 }
 
+function FieldGrid({ fields }: { fields: [string, string | number | null | undefined][] }) {
+  return (
+    <div className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
+      {fields.map(([label, value]) => (
+        <div key={label} className="rounded-lg bg-primary/5 p-3">
+          <p className="text-xs font-utility uppercase tracking-wider text-muted-foreground">{label}</p>
+          <p className="text-sm font-medium text-foreground">{value || "—"}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function ProfileView({
   member,
 }: {
@@ -511,22 +331,26 @@ function ProfileView({
 }) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
-  const registrationFields: [string, string | number | null | undefined][] = [
+  const workingCountryLabel =
+    member.workingCountry === "Other" ? member.workingCountryOther || "Other" : member.workingCountry;
+
+  const personalFields: [string, string | number | null | undefined][] = [
     ["Full Name", member.fullName],
     ["Father's Name", member.fatherName],
-    ["Phone", member.phone],
-    ["Email", member.email],
-    ["Birth Year", member.birthYear],
-    ["Gender", member.gender],
+    ["Date of Birth", member.dob ? new Date(member.dob).toLocaleDateString() : "—"],
     ["Blood Group", member.bloodGroup],
+  ];
+
+  const contactFields: [string, string | number | null | undefined][] = [
+    ["Home Country Number", member.homeCountryNumber],
+    ["Working Country Number", member.workingCountryNumber],
+    ["Email", member.email],
     ["Address", member.address],
-    ["Native Place", member.nativePlace],
-    ["Working Country", member.workingCountry],
-    ["Zone", typeof member.zone === "object" ? member.zone?.name : member.zone],
-    ["Zone (Other)", member.zoneOther],
-    ["Coordinator", typeof member.coordinator === "object" ? member.coordinator?.name : member.coordinator],
-    ["Coordinator (Other)", member.coordinatorOther],
-    ["Mandalam Committee", member.mandalamCommittee],
+  ];
+
+  const locationFields: [string, string | number | null | undefined][] = [
+    ["Zone", member.zone],
+    ["Working Country", workingCountryLabel],
   ];
 
   const membershipFields: [string, string | number | null | undefined][] = [
@@ -536,12 +360,9 @@ function ProfileView({
       "Membership Plan",
       typeof member.membershipType === "object" && member.membershipType ? member.membershipType.title : member.membershipType || "—",
     ],
-    ["Committee Role", member.committeeRole],
-    ["Panchayath", member.panchayath],
     ["Membership Start", member.membershipStart ? new Date(member.membershipStart).toLocaleDateString() : "—"],
     ["Membership Expiry", member.membershipExpiry ? new Date(member.membershipExpiry).toLocaleDateString() : "—"],
     ["Days Remaining", member.daysRemaining],
-    ["Joined Date", member.joinedDate ? new Date(member.joinedDate).toLocaleDateString() : "—"],
   ];
 
   return (
@@ -571,68 +392,71 @@ function ProfileView({
       )}
 
       <div>
-        <p className="mb-3 text-xs font-utility uppercase tracking-wider text-muted-foreground">Registration Details</p>
-        <div className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
-          {registrationFields.map(([label, value]) => (
-            <div key={label} className="rounded-lg bg-primary/5 p-3">
-              <p className="text-xs font-utility uppercase tracking-wider text-muted-foreground">{label}</p>
-              <p className="text-sm font-medium text-foreground">{value || "—"}</p>
-            </div>
-          ))}
-        </div>
+        <p className="mb-3 text-xs font-utility uppercase tracking-wider text-muted-foreground">Personal Information</p>
+        <FieldGrid fields={personalFields} />
       </div>
 
       <div>
-        <p className="mb-3 text-xs font-utility uppercase tracking-wider text-muted-foreground">Membership Details</p>
-        <div className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
-          {membershipFields.map(([label, value]) => (
-            <div key={label} className="rounded-lg bg-primary/5 p-3">
-              <p className="text-xs font-utility uppercase tracking-wider text-muted-foreground">{label}</p>
-              <p className="text-sm font-medium text-foreground">{value || "—"}</p>
-            </div>
-          ))}
-        </div>
+        <p className="mb-3 text-xs font-utility uppercase tracking-wider text-muted-foreground">Contact</p>
+        <FieldGrid fields={contactFields} />
+      </div>
+
+      <div>
+        <p className="mb-3 text-xs font-utility uppercase tracking-wider text-muted-foreground">Location</p>
+        <FieldGrid fields={locationFields} />
+      </div>
+
+      <div>
+        <p className="mb-3 text-xs font-utility uppercase tracking-wider text-muted-foreground">Membership</p>
+        <FieldGrid fields={membershipFields} />
       </div>
     </div>
   );
 }
 
+// Uses the exact same field set/validation as public registration and the
+// admin "Add Member" form (memberEditFormSchema + MemberFormFields) — photo
+// is optional here since the member already has one.
 function EditMemberForm({
   memberId,
   initial,
-  plans,
   onSaved,
   onError,
 }: {
   memberId: string;
   initial: NonNullable<Awaited<ReturnType<typeof memberService.getById>>>;
-  plans: MembershipPlan[];
   onSaved: () => void;
   onError: (msg: string) => void;
 }) {
-  const [form, setForm] = useState({
-    fullName: initial.fullName || "",
-    phone: initial.phone || "",
-    email: initial.email || "",
-    gender: initial.gender || "male",
-    bloodGroup: initial.bloodGroup || "unknown",
-    fatherName: initial.fatherName || "",
-    birthYear: initial.birthYear || "",
-    address: initial.address || "",
-    nativePlace: initial.nativePlace || "",
-    workingCountry: initial.workingCountry || "",
-    zone: typeof initial.zone === "string" ? initial.zone : "",
-    zoneOther: initial.zoneOther || "",
-    coordinator: typeof initial.coordinator === "string" ? initial.coordinator : "",
-    coordinatorOther: initial.coordinatorOther || "",
-    mandalamCommittee: initial.mandalamCommittee || "",
-    committeeRole: initial.committeeRole || "",
-    panchayath: initial.panchayath || "",
-    membershipType:
-      typeof initial.membershipType === "object" && initial.membershipType ? initial.membershipType._id :
-      typeof initial.membershipType === "string" ? initial.membershipType : "",
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm<MemberEditFormInput>({
+    resolver: zodResolver(memberEditFormSchema),
+    defaultValues: {
+      fullName: initial.fullName || "",
+      fatherName: initial.fatherName || "",
+      dob: initial.dob ? new Date(initial.dob).toISOString().split("T")[0] : "",
+      bloodGroup: (initial.bloodGroup as MemberEditFormInput["bloodGroup"]) || undefined,
+      homeCountryNumber: initial.homeCountryNumber || "",
+      workingCountryNumber: initial.workingCountryNumber || "",
+      email: initial.email || "",
+      address: initial.address || "",
+      zone: (initial.zone as MemberEditFormInput["zone"]) || undefined,
+      workingCountry: (initial.workingCountry as MemberEditFormInput["workingCountry"]) || undefined,
+      workingCountryOther: initial.workingCountryOther || "",
+    },
   });
-  const [photo, setPhoto] = useState<File | null>(null);
+
+  const onPhotoSelect = (file: File) => {
+    setValue("photo", file, { shouldValidate: true });
+    setPhotoPreview(URL.createObjectURL(file));
+  };
 
   const updateMutation = useMutation({
     mutationFn: (formData: FormData) => memberService.update(memberId, formData),
@@ -640,133 +464,47 @@ function EditMemberForm({
     onError: (err) => onError(extractErrorMessage(err)),
   });
 
-  const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = (values: MemberEditFormInput) => {
     const formData = new FormData();
-    Object.entries(form).forEach(([key, value]) => {
-      if (value) formData.append(key, value);
-    });
-    if (photo) formData.append("photo", photo);
+    if (values.photo instanceof File) formData.append("photo", values.photo);
+    formData.append("fullName", values.fullName);
+    formData.append("fatherName", values.fatherName);
+    formData.append("dob", values.dob);
+    formData.append("bloodGroup", values.bloodGroup);
+    formData.append("homeCountryNumber", values.homeCountryNumber);
+    formData.append("workingCountryNumber", values.workingCountryNumber);
+    if (values.email) formData.append("email", values.email);
+    formData.append("address", values.address);
+    formData.append("zone", values.zone);
+    formData.append("workingCountry", values.workingCountry);
+    if (values.workingCountry === "Other" && values.workingCountryOther) {
+      formData.append("workingCountryOther", values.workingCountryOther);
+    }
     updateMutation.mutate(formData);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-1.5">
-          <Label htmlFor="e_fullName">Full Name</Label>
-          <Input id="e_fullName" value={form.fullName} onChange={handleChange("fullName")} className="rounded-xl" />
-        </div>
-        <div className="space-y-1.5">
-         <Label htmlFor="e_fatherName">Father&apos;s Name</Label>
-          <Input id="e_fatherName" value={form.fatherName} onChange={handleChange("fatherName")} className="rounded-xl" />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="e_phone">Phone</Label>
-          <Input id="e_phone" value={form.phone} onChange={handleChange("phone")} className="rounded-xl" />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="e_email">Email</Label>
-          <Input id="e_email" value={form.email} onChange={handleChange("email")} className="rounded-xl" />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="e_gender">Gender</Label>
-          <select id="e_gender" className={selectClass} value={form.gender} onChange={handleChange("gender")}>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="e_bloodGroup">Blood Group</Label>
-          <select
-            id="e_bloodGroup"
-            className={selectClass}
-            value={form.bloodGroup}
-            onChange={handleChange("bloodGroup")}
-          >
-            {["unknown", "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((bg) => (
-              <option key={bg} value={bg}>
-                {bg}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="e_photo">Photo</Label>
-          <Input id="e_photo" type="file" accept="image/*" onChange={(e) => setPhoto(e.target.files?.[0] ?? null)} className="rounded-xl" />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="e_birthYear">Birth Year</Label>
-          <Input id="e_birthYear" type="number" value={form.birthYear} onChange={handleChange("birthYear")} className="rounded-xl" />
-        </div>
-        <div className="space-y-1.5 sm:col-span-2">
-          <Label htmlFor="e_address">Address</Label>
-          <Input id="e_address" value={form.address} onChange={handleChange("address")} className="rounded-xl" />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="e_nativePlace">Native Place</Label>
-          <Input id="e_nativePlace" value={form.nativePlace} onChange={handleChange("nativePlace")} className="rounded-xl" />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="e_workingCountry">Working Country</Label>
-          <Input id="e_workingCountry" value={form.workingCountry} onChange={handleChange("workingCountry")} className="rounded-xl" />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="e_zone">Zone</Label>
-          <Input id="e_zone" value={form.zone} onChange={handleChange("zone")} className="rounded-xl" />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="e_zoneOther">Zone (Other)</Label>
-          <Input id="e_zoneOther" value={form.zoneOther} onChange={handleChange("zoneOther")} className="rounded-xl" />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="e_coordinator">Coordinator</Label>
-          <Input id="e_coordinator" value={form.coordinator} onChange={handleChange("coordinator")} className="rounded-xl" />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="e_coordinatorOther">Coordinator (Other)</Label>
-          <Input id="e_coordinatorOther" value={form.coordinatorOther} onChange={handleChange("coordinatorOther")} className="rounded-xl" />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="e_mandalamCommittee">Mandalam Committee</Label>
-          <Input id="e_mandalamCommittee" value={form.mandalamCommittee} onChange={handleChange("mandalamCommittee")} className="rounded-xl" />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="e_committeeRole">Committee Role</Label>
-          <Input id="e_committeeRole" value={form.committeeRole} onChange={handleChange("committeeRole")} className="rounded-xl" />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="e_panchayath">Panchayath</Label>
-          <Input id="e_panchayath" value={form.panchayath} onChange={handleChange("panchayath")} className="rounded-xl" />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="e_membershipType">Membership Plan</Label>
-          <select
-            id="e_membershipType"
-            className={selectClass}
-            value={form.membershipType}
-            onChange={handleChange("membershipType")}
-          >
-            <option value="">Keep current</option>
-            {plans.map((plan) => (
-              <option key={plan._id} value={plan._id}>
-                {plan.title} ({plan.duration}mo)
-              </option>
-            ))}
-          </select>
-        </div>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <MemberFormFields
+          register={register}
+          errors={errors}
+          watch={watch}
+          photoPreview={photoPreview}
+          onPhotoSelect={onPhotoSelect}
+          existingPhotoUrl={initial.photo?.url}
+        />
       </div>
 
-      <div className="flex justify-end gap-3 pt-4 border-t border-border">
+      <div className="flex justify-end gap-3 border-t border-border pt-4">
         <Button type="button" variant="outline" onClick={() => onSaved()} className="rounded-xl">
           Cancel
         </Button>
-        <Button type="submit" disabled={updateMutation.isPending} className="rounded-xl bg-primary hover:bg-primary/90">
+        <Button
+          type="submit"
+          disabled={isSubmitting || updateMutation.isPending}
+          className="rounded-xl bg-primary hover:bg-primary/90"
+        >
           {updateMutation.isPending ? "Saving..." : "Save Changes"}
         </Button>
       </div>
