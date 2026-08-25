@@ -8,6 +8,7 @@ import { useMemberLogin } from "@/hooks/useAuthMutations";
 import { extractErrorMessage } from "@/lib/memberApiClient";
 import { memberLoginSchema, type MemberLoginInput } from "@/lib/validators/authSchemas";
 import { useMemberAuth } from "@/store/memberAuthContext";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 const Button = ({
   children,
@@ -445,7 +446,8 @@ export function MemberLoginForm() {
   return (
     <section className="min-h-screen bg-[#f8faf8] pt-20 pb-16 flex items-center justify-center px-4 sm:px-6">
       <div className="w-full max-w-7xl mx-auto">
-        <div className="grid lg:grid-cols-[1fr,1fr] gap-12 items-start">
+        <Breadcrumb items={[{ label: "Member Login" }]} />
+        <div className="mt-6 grid lg:grid-cols-[1fr,1fr] gap-12 items-start">
           <div className="hidden lg:block pt-8">
             <div className="relative">
               <div className="absolute -top-12 -left-12 w-64 h-64 rounded-full bg-green/5 blur-3xl"></div>

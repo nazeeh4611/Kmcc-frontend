@@ -9,3 +9,4 @@ export * from "./pagination";
 export * from "./table";
 export * from "./dialog";
 export * from "./label";
+export * from "./breadcrumb";

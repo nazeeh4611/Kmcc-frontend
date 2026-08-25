@@ -3,12 +3,13 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Search,
   Plus,
   Download,
   Eye,
+  Trash2,
   Users,
   UserCheck,
   Clock,
@@ -17,7 +18,7 @@ import {
   User as UserIcon,
 } from "lucide-react";
 import { AdminNav } from "@/components/AdminNav";
-import { adminApiClient } from "@/lib/adminApiClient";
+import { adminApiClient, extractErrorMessage } from "@/lib/adminApiClient";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,6 +56,10 @@ const memberService = {
     const { data } = await adminApiClient.get<{ data: PaginatedResult<Member> }>("/members", { params });
     return data.data;
   },
+  remove: async (id: string) => {
+    const { data } = await adminApiClient.delete(`/members/${id}`);
+    return data;
+  },
   exportExcel: async (status?: string) => {
     const response = await adminApiClient.get("/members/export", {
       params: status ? { status } : undefined,
@@ -74,11 +79,13 @@ const memberService = {
 export default function AdminMembersPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const initialStatus = (searchParams.get("status") as StatusFilter | null) || "";
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [status, setStatus] = useState<StatusFilter>(initialStatus);
   const [page, setPage] = useState(1);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const limit = 20;
 
   const { data: stats } = useQuery({ queryKey: ["members", "stats"], queryFn: memberService.stats });
@@ -87,6 +94,25 @@ export default function AdminMembersPage() {
     queryKey: ["members", "list", { page, limit, search, status }],
     queryFn: () => memberService.list({ page, limit, search: search || undefined, status: status || undefined }),
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => memberService.remove(id),
+    onMutate: (id) => setDeletingId(id),
+    onSettled: () => setDeletingId(null),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["members"] });
+    },
+    onError: (err) => {
+      alert(extractErrorMessage(err));
+    },
+  });
+
+  const handleDelete = (memberId: string, fullName: string) => {
+    if (!confirm(`Are you sure you want to permanently delete ${fullName}? This action cannot be undone.`)) {
+      return;
+    }
+    deleteMutation.mutate(memberId);
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -269,14 +295,26 @@ export default function AdminMembersPage() {
                       </td>
                       <td className="px-4 py-3">{member.dob ? new Date(member.dob).toLocaleDateString() : "—"}</td>
                       <td className="px-4 py-3 text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => router.push(`/admin/members/${member._id}`)}
-                        >
-                          <Eye className="h-4 w-4" />
-                          View
-                        </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => router.push(`/admin/members/${member._id}`)}
+                          >
+                            <Eye className="h-4 w-4" />
+                            View
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={deletingId === member._id}
+                            onClick={() => handleDelete(member._id, member.fullName)}
+                            className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            {deletingId === member._id ? "Deleting..." : "Delete"}
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))
