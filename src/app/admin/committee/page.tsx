@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { adminApiClient as apiClient, extractErrorMessage } from "@/lib/adminApiClient";
 import { AdminNav } from "@/components/AdminNav";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import Image from "next/image";
 const Card = ({
   children,
@@ -365,6 +367,7 @@ export default function AdminCommitteePage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["committee", "admin"],
@@ -381,13 +384,18 @@ export default function AdminCommitteePage() {
     mutationFn: (id: string) => committeeService.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["committee"] });
+      toast.success(`${pendingDelete?.name ?? "Committee member"} was deleted successfully.`);
+      setPendingDelete(null);
     },
-    onError: (err) => setError(extractErrorMessage(err)),
+    onError: (err) => {
+      setError(extractErrorMessage(err));
+      toast.error(extractErrorMessage(err));
+    },
   });
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this committee member?")) return;
-    await deleteMutation.mutateAsync(id);
+  const handleDelete = () => {
+    if (!pendingDelete) return;
+    deleteMutation.mutate(pendingDelete.id);
   };
 
   const handleEdit = (member: any) => {
@@ -506,7 +514,7 @@ export default function AdminCommitteePage() {
                       variant="destructive"
                       size="icon"
                       className="h-8 w-8 rounded-xl bg-white/90 hover:bg-white"
-                      onClick={() => handleDelete(member._id)}
+                      onClick={() => setPendingDelete({ id: member._id, name: member.name })}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -543,6 +551,16 @@ export default function AdminCommitteePage() {
           </div>
         )}
       </main>
+
+      <ConfirmDialog
+        open={!!pendingDelete}
+        onClose={() => setPendingDelete(null)}
+        onConfirm={handleDelete}
+        loading={deleteMutation.isPending}
+        title="Delete this committee member?"
+        description={`Are you sure you want to remove ${pendingDelete?.name} from the committee? This action cannot be undone.`}
+        confirmLabel="Delete"
+      />
     </div>
   );
 }

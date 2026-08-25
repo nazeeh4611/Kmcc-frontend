@@ -8,5 +8,6 @@ export * from "./empty-state";
 export * from "./pagination";
 export * from "./table";
 export * from "./dialog";
+export * from "./confirm-dialog";
 export * from "./label";
 export * from "./breadcrumb";

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   Search,
   Plus,
@@ -22,6 +23,7 @@ import { adminApiClient, extractErrorMessage } from "@/lib/adminApiClient";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { MemberStatusBadge } from "@/components/MemberStatusBadge";
 import type { Member, MembershipStatus, PaginatedResult } from "@/types";
 
@@ -85,7 +87,7 @@ export default function AdminMembersPage() {
   const [searchInput, setSearchInput] = useState("");
   const [status, setStatus] = useState<StatusFilter>(initialStatus);
   const [page, setPage] = useState(1);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; fullName: string } | null>(null);
   const limit = 20;
 
   const { data: stats } = useQuery({ queryKey: ["members", "stats"], queryFn: memberService.stats });
@@ -97,21 +99,19 @@ export default function AdminMembersPage() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => memberService.remove(id),
-    onMutate: (id) => setDeletingId(id),
-    onSettled: () => setDeletingId(null),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["members"] });
+      toast.success(`${pendingDelete?.fullName ?? "Member"} was deleted successfully.`);
+      setPendingDelete(null);
     },
     onError: (err) => {
-      alert(extractErrorMessage(err));
+      toast.error(extractErrorMessage(err));
     },
   });
 
-  const handleDelete = (memberId: string, fullName: string) => {
-    if (!confirm(`Are you sure you want to permanently delete ${fullName}? This action cannot be undone.`)) {
-      return;
-    }
-    deleteMutation.mutate(memberId);
+  const handleDelete = () => {
+    if (!pendingDelete) return;
+    deleteMutation.mutate(pendingDelete.id);
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -307,12 +307,11 @@ export default function AdminMembersPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            disabled={deletingId === member._id}
-                            onClick={() => handleDelete(member._id, member.fullName)}
+                            onClick={() => setPendingDelete({ id: member._id, fullName: member.fullName })}
                             className="text-red-600 hover:bg-red-50 hover:text-red-700"
                           >
                             <Trash2 className="h-4 w-4" />
-                            {deletingId === member._id ? "Deleting..." : "Delete"}
+                            Delete
                           </Button>
                         </div>
                       </td>
@@ -350,6 +349,16 @@ export default function AdminMembersPage() {
           </div>
         )}
       </main>
+
+      <ConfirmDialog
+        open={!!pendingDelete}
+        onClose={() => setPendingDelete(null)}
+        onConfirm={handleDelete}
+        loading={deleteMutation.isPending}
+        title="Delete this member?"
+        description={`Are you sure you want to permanently delete ${pendingDelete?.fullName}? This action cannot be undone.`}
+        confirmLabel="Delete"
+      />
     </div>
   );
 }

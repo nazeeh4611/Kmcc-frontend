@@ -3,7 +3,9 @@
 
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { toast } from "sonner";
 import { AdminNav } from "@/components/AdminNav";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import Image from "next/image";
 
 const Card = ({
@@ -181,6 +183,8 @@ export default function AdminBannersPage() {
   const [alt, setAlt] = useState("");
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [pendingDelete, setPendingDelete] = useState<BannerImage | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -189,6 +193,7 @@ export default function AdminBannersPage() {
       setBanners(res.data.banners ?? []);
     } catch (error) {
       console.error("Failed to load banners:", error);
+      toast.error("Failed to load banners.");
     } finally {
       setLoading(false);
     }
@@ -211,20 +216,28 @@ export default function AdminBannersPage() {
       setFile(null);
       setAlt("");
       await load();
+      toast.success("Banner uploaded successfully.");
     } catch (error) {
       console.error("Upload failed:", error);
+      toast.error("Failed to upload banner.");
     } finally {
       setUploading(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this banner?")) return;
+  const handleDelete = async () => {
+    if (!pendingDelete) return;
+    setDeleting(true);
     try {
-      await axios.delete(`/api/banners/${id}`);
+      await axios.delete(`/api/banners/${pendingDelete.id}`);
       await load();
+      toast.success("Banner deleted successfully.");
+      setPendingDelete(null);
     } catch (error) {
       console.error("Delete failed:", error);
+      toast.error("Failed to delete banner.");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -314,10 +327,10 @@ export default function AdminBannersPage() {
                     <Image src={banner.url} alt={banner.alt} fill sizes="(min-width: 1024px) 33vw, 50vw" className="object-cover" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     <Button
-                      onClick={() => handleDelete(banner.id)}
+                      onClick={() => setPendingDelete(banner)}
                       variant="destructive"
                       size="icon"
-                      className="absolute right-2 top-2 h-8 w-8 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute right-2 top-2 h-8 w-8 rounded-xl shadow-md"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -334,6 +347,16 @@ export default function AdminBannersPage() {
           )}
         </div>
       </main>
+
+      <ConfirmDialog
+        open={!!pendingDelete}
+        onClose={() => setPendingDelete(null)}
+        onConfirm={handleDelete}
+        loading={deleting}
+        title="Delete this banner?"
+        description={`"${pendingDelete?.alt || "This banner"}" will be permanently removed from the homepage rotation. This action cannot be undone.`}
+        confirmLabel="Delete"
+      />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
 import { adminApiClient as apiClient } from "@/lib/adminApiClient";
 import { memberEditFormSchema, type MemberEditFormInput } from "@/lib/validators/memberSchema";
 import { MemberFormFields } from "@/features/member/MemberFormFields";
@@ -14,6 +15,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { MemberStatusBadge } from "@/components/MemberStatusBadge";
 
 const Alert = ({
@@ -640,6 +642,8 @@ function ActionsPanel({
   const router = useRouter();
   const [renewPlan, setRenewPlan] = useState("");
   const [busy, setBusy] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const run = async <T,>(fn: () => Promise<T>, msg: string | ((result: T) => string)) => {
     setBusy(true);
@@ -703,16 +707,7 @@ function ActionsPanel({
           <Button
             variant="destructive"
             disabled={busy}
-            onClick={async () => {
-              if (!confirm(`Are you sure you want to permanently delete ${member.fullName}? This action cannot be undone.`)) return;
-              setBusy(true);
-              try {
-                await memberService.remove(memberId);
-                router.push("/admin/members");
-              } finally {
-                setBusy(false);
-              }
-            }}
+            onClick={() => setConfirmDelete(true)}
             className="rounded-xl"
           >
             🗑 Delete Member
@@ -740,6 +735,28 @@ function ActionsPanel({
           </Button>
         </div>
       </CardContent>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        onClose={() => setConfirmDelete(false)}
+        loading={deleting}
+        title="Delete this member?"
+        description={`Are you sure you want to permanently delete ${member.fullName}? This action cannot be undone.`}
+        confirmLabel="Delete"
+        onConfirm={async () => {
+          setDeleting(true);
+          try {
+            await memberService.remove(memberId);
+            toast.success(`${member.fullName} was deleted successfully.`);
+            router.push("/admin/members");
+          } catch (err) {
+            toast.error(extractErrorMessage(err));
+          } finally {
+            setDeleting(false);
+            setConfirmDelete(false);
+          }
+        }}
+      />
     </Card>
   );
 }

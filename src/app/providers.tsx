@@ -1,6 +1,7 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "sonner";
 import { AdminAuthProvider } from "@/store/adminAuthContext";
 import { MemberAuthProvider } from "@/store/memberAuthContext";
 import { useState } from "react";
@@ -26,6 +27,7 @@ export default function Providers({
       <AdminAuthProvider>
         <MemberAuthProvider>{children}</MemberAuthProvider>
       </AdminAuthProvider>
+      <Toaster position="top-right" richColors closeButton />
     </QueryClientProvider>
   );
 }
