@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import axios from "axios";
 import Image from "next/image";
+import { publicApiClient } from "@/lib/publicApiClient";
 
 type BannerImage = {
   id: string;
   url: string;
   alt: string;
-  createdAt: number;
+  createdAt: string;
 };
 
 export default function HeroBanner() {
@@ -19,8 +19,16 @@ export default function HeroBanner() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await axios.get("/api/banners");
-        setBanners(res.data.banners ?? []);
+        const res = await publicApiClient.get("/carousel");
+        const slides = res.data.data.slides ?? [];
+        setBanners(
+          slides.map((slide: any) => ({
+            id: slide._id,
+            url: slide.image.url,
+            alt: slide.title,
+            createdAt: slide.createdAt,
+          }))
+        );
       } catch (error) {
         console.error("Failed to load banners:", error);
       } finally {

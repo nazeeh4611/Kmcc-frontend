@@ -2,8 +2,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import axios from "axios";
 import { toast } from "sonner";
+import { adminApiClient, extractErrorMessage } from "@/lib/adminApiClient";
 import { AdminNav } from "@/components/AdminNav";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import Image from "next/image";
@@ -174,13 +174,18 @@ type BannerImage = {
   id: string;
   url: string;
   alt: string;
-  createdAt: number;
+  createdAt: string;
 };
 
+// Backed by the Express API's /carousel routes (Cloudinary + MongoDB) —
+// NOT local disk. A previous version of this page wrote uploads straight to
+// the Next.js server's public/ folder, which works in local dev but silently
+// fails on Vercel (read-only filesystem at runtime), so uploads/deletes
+// there returned errors even though everything looked fine locally.
 export default function AdminBannersPage() {
   const [banners, setBanners] = useState<BannerImage[]>([]);
   const [file, setFile] = useState<File | null>(null);
-  const [alt, setAlt] = useState("");
+  const [title, setTitle] = useState("");
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [pendingDelete, setPendingDelete] = useState<BannerImage | null>(null);
@@ -189,11 +194,19 @@ export default function AdminBannersPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const res = await axios.get("/api/banners");
-      setBanners(res.data.banners ?? []);
+      const res = await adminApiClient.get("/carousel/admin/all");
+      const slides = res.data.data.slides ?? [];
+      setBanners(
+        slides.map((slide: any) => ({
+          id: slide._id,
+          url: slide.image.url,
+          alt: slide.title,
+          createdAt: slide.createdAt,
+        }))
+      );
     } catch (error) {
       console.error("Failed to load banners:", error);
-      toast.error("Failed to load banners.");
+      toast.error(extractErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -205,21 +218,23 @@ export default function AdminBannersPage() {
 
   const handleUpload = async () => {
     if (!file) return;
+    if (!title.trim() || title.trim().length < 2) {
+      toast.error("Enter a title (at least 2 characters) for the banner.");
+      return;
+    }
     setUploading(true);
     try {
       const formData = new FormData();
-      formData.append("file", file);
-      formData.append("alt", alt || "Hero banner");
-      await axios.post("/api/banners", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      formData.append("image", file);
+      formData.append("title", title.trim());
+      await adminApiClient.post("/carousel", formData);
       setFile(null);
-      setAlt("");
+      setTitle("");
       await load();
       toast.success("Banner uploaded successfully.");
     } catch (error) {
       console.error("Upload failed:", error);
-      toast.error("Failed to upload banner.");
+      toast.error(extractErrorMessage(error));
     } finally {
       setUploading(false);
     }
@@ -229,13 +244,13 @@ export default function AdminBannersPage() {
     if (!pendingDelete) return;
     setDeleting(true);
     try {
-      await axios.delete(`/api/banners/${pendingDelete.id}`);
+      await adminApiClient.delete(`/carousel/${pendingDelete.id}`);
       await load();
       toast.success("Banner deleted successfully.");
       setPendingDelete(null);
     } catch (error) {
       console.error("Delete failed:", error);
-      toast.error("Failed to delete banner.");
+      toast.error(extractErrorMessage(error));
     } finally {
       setDeleting(false);
     }
@@ -281,11 +296,11 @@ export default function AdminBannersPage() {
               </div>
               <div className="flex flex-col gap-3">
                 <div>
-                  <label className="text-sm font-medium text-foreground">Alt Text</label>
+                  <label className="text-sm font-medium text-foreground">Title</label>
                   <input
                     type="text"
-                    value={alt}
-                    onChange={(e) => setAlt(e.target.value)}
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
                     placeholder="Image description"
                     className="mt-1 w-full rounded-xl border border-border px-4 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                   />
