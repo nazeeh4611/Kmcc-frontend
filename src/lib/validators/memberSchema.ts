@@ -37,8 +37,18 @@ export const memberFormSchema = withWorkingCountryOtherRefine(z.object(memberFor
 export type MemberFormInput = z.infer<typeof memberFormSchema>;
 
 // Used when editing an existing member — photo becomes optional (only
-// re-upload if changing it).
+// re-upload if changing it). membershipId is admin-only (renumbering, e.g.
+// 1001, 1002) and isn't part of the shared field set.
 export const memberEditFormSchema = withWorkingCountryOtherRefine(
-  z.object({ ...memberFormShape, photo: z.any().optional() })
+  z.object({
+    ...memberFormShape,
+    photo: z.any().optional(),
+    membershipId: z
+      .string()
+      .trim()
+      .regex(/^\d+$/, "Membership ID must contain digits only")
+      .optional()
+      .or(z.literal("")),
+  })
 );
 export type MemberEditFormInput = z.infer<typeof memberEditFormSchema>;

@@ -439,6 +439,7 @@ function EditMemberForm({
   } = useForm<MemberEditFormInput>({
     resolver: zodResolver(memberEditFormSchema),
     defaultValues: {
+      membershipId: initial.membershipId || "",
       fullName: initial.fullName || "",
       fatherName: initial.fatherName || "",
       dob: initial.dob ? new Date(initial.dob).toISOString().split("T")[0] : "",
@@ -467,6 +468,9 @@ function EditMemberForm({
   const onSubmit = (values: MemberEditFormInput) => {
     const formData = new FormData();
     if (values.photo instanceof File) formData.append("photo", values.photo);
+    if (values.membershipId && values.membershipId !== initial.membershipId) {
+      formData.append("membershipId", values.membershipId);
+    }
     formData.append("fullName", values.fullName);
     formData.append("fatherName", values.fatherName);
     formData.append("dob", values.dob);
@@ -485,6 +489,21 @@ function EditMemberForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+        <Label htmlFor="membershipId" className="text-amber-900">
+          Membership ID <span className="font-normal text-amber-700">(admin only)</span>
+        </Label>
+        <Input
+          id="membershipId"
+          {...register("membershipId")}
+          className="mt-1.5 rounded-xl bg-white"
+          placeholder="e.g. 1001"
+        />
+        {errors.membershipId && (
+          <p className="mt-1 text-xs text-red-600">{String(errors.membershipId.message)}</p>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <MemberFormFields
           register={register}
