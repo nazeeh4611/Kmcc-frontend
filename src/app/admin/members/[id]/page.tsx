@@ -355,6 +355,11 @@ function ProfileView({
     ["Working Country", workingCountryLabel],
   ];
 
+  const nomineeFields: [string, string | number | null | undefined][] = [
+    ["Nominee Name", member.nomineeName],
+    ["Nominee Relation", member.nomineeRelation],
+  ];
+
   const membershipFields: [string, string | number | null | undefined][] = [
     ["Membership ID", member.membershipId],
     ["Status", member.membershipStatus],
@@ -409,6 +414,11 @@ function ProfileView({
       </div>
 
       <div>
+        <p className="mb-3 text-xs font-utility uppercase tracking-wider text-muted-foreground">Nominee</p>
+        <FieldGrid fields={nomineeFields} />
+      </div>
+
+      <div>
         <p className="mb-3 text-xs font-utility uppercase tracking-wider text-muted-foreground">Membership</p>
         <FieldGrid fields={membershipFields} />
       </div>
@@ -450,6 +460,8 @@ function EditMemberForm({
       workingCountryNumber: initial.workingCountryNumber || "",
       email: initial.email || "",
       address: initial.address || "",
+      nomineeName: initial.nomineeName || "",
+      nomineeRelation: (initial.nomineeRelation as MemberEditFormInput["nomineeRelation"]) || undefined,
       zone: (initial.zone as MemberEditFormInput["zone"]) || undefined,
       workingCountry: (initial.workingCountry as MemberEditFormInput["workingCountry"]) || undefined,
       workingCountryOther: initial.workingCountryOther || "",
@@ -481,6 +493,8 @@ function EditMemberForm({
     formData.append("workingCountryNumber", values.workingCountryNumber);
     if (values.email) formData.append("email", values.email);
     formData.append("address", values.address);
+    formData.append("nomineeName", values.nomineeName);
+    formData.append("nomineeRelation", values.nomineeRelation);
     formData.append("zone", values.zone);
     formData.append("workingCountry", values.workingCountry);
     if (values.workingCountry === "Other" && values.workingCountryOther) {

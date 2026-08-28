@@ -64,6 +64,8 @@ export default function NewMemberPage() {
     formData.append("workingCountryNumber", values.workingCountryNumber);
     if (values.email) formData.append("email", values.email);
     formData.append("address", values.address);
+    formData.append("nomineeName", values.nomineeName);
+    formData.append("nomineeRelation", values.nomineeRelation);
     formData.append("zone", values.zone);
     formData.append("workingCountry", values.workingCountry);
     if (values.workingCountry === "Other" && values.workingCountryOther) {

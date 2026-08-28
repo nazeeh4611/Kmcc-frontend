@@ -2,7 +2,12 @@
 
 import type { FieldErrors, UseFormRegister, UseFormWatch } from "react-hook-form";
 import { Camera } from "lucide-react";
-import { ZONE_OPTIONS, WORKING_COUNTRY_OPTIONS, BLOOD_GROUP_OPTIONS } from "@/lib/constants/memberOptions";
+import {
+  ZONE_OPTIONS,
+  WORKING_COUNTRY_OPTIONS,
+  BLOOD_GROUP_OPTIONS,
+  NOMINEE_RELATION_OPTIONS,
+} from "@/lib/constants/memberOptions";
 
 // Shared field set rendered by BOTH public registration (MemberRegistrationForm)
 // and the admin "Add Member" / "Edit Member" forms, so labels, field order,
@@ -127,6 +132,25 @@ export function MemberFormFields({
         <label htmlFor="address" className={labelClass}>Address *</label>
         <input id="address" placeholder="Full address" className={inputClass} {...register("address")} />
         {errors.address && <p className={errorClass}>{String(errors.address.message)}</p>}
+      </div>
+
+      {/* Nominee Name */}
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="nomineeName" className={labelClass}>Nominee Name *</label>
+        <input id="nomineeName" placeholder="Nominee's full name" className={inputClass} {...register("nomineeName")} />
+        {errors.nomineeName && <p className={errorClass}>{String(errors.nomineeName.message)}</p>}
+      </div>
+
+      {/* Nominee Relation */}
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="nomineeRelation" className={labelClass}>Nominee Relation *</label>
+        <select id="nomineeRelation" className={selectClass} {...register("nomineeRelation")}>
+          <option value="">Select relation</option>
+          {NOMINEE_RELATION_OPTIONS.map((r) => (
+            <option key={r} value={r}>{r}</option>
+          ))}
+        </select>
+        {errors.nomineeRelation && <p className={errorClass}>{String(errors.nomineeRelation.message)}</p>}
       </div>
 
       {/* Zone */}

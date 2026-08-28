@@ -17,6 +17,7 @@ import {
   User as UserIcon,
   Users,
   Cake,
+  Heart,
 } from "lucide-react";
 import { useMemberAuth } from "@/store/memberAuthContext";
 import { memberAuthService } from "@/services/authService";
@@ -147,6 +148,16 @@ export default function MemberDashboardPage() {
                   <DetailRow icon={MapPin} label="Address" value={member.address ?? "—"} />
                   <DetailRow icon={MapPin} label="Zone" value={member.zone ?? "—"} />
                   <DetailRow icon={Globe2} label="Working Country" value={workingCountryLabel(member)} />
+                </CardContent>
+              </Card>
+
+              <Card className="animate-in-up p-6">
+                <CardHeader className="p-0 pb-4">
+                  <CardTitle>Nominee</CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 gap-4 p-0 sm:grid-cols-2">
+                  <DetailRow icon={Heart} label="Nominee Name" value={member.nomineeName || "—"} />
+                  <DetailRow icon={Users} label="Nominee Relation" value={member.nomineeRelation || "—"} />
                 </CardContent>
               </Card>
 

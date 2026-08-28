@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { ZONE_OPTIONS, WORKING_COUNTRY_OPTIONS, BLOOD_GROUP_OPTIONS } from "@/lib/constants/memberOptions";
+import {
+  ZONE_OPTIONS,
+  WORKING_COUNTRY_OPTIONS,
+  BLOOD_GROUP_OPTIONS,
+  NOMINEE_RELATION_OPTIONS,
+} from "@/lib/constants/memberOptions";
 
 const phoneNumber = z
   .string()
@@ -19,6 +24,10 @@ const memberFormShape = {
   workingCountryNumber: phoneNumber,
   email: z.string().trim().email("Enter a valid email").optional().or(z.literal("")),
   address: z.string().trim().min(1, "Address is required").max(500),
+  nomineeName: z.string().trim().min(1, "Nominee name is required").max(150),
+  nomineeRelation: z.enum(NOMINEE_RELATION_OPTIONS, {
+    errorMap: () => ({ message: "Select the nominee's relation to you" }),
+  }),
   zone: z.enum(ZONE_OPTIONS, { errorMap: () => ({ message: "Select a valid zone" }) }),
   workingCountry: z.enum(WORKING_COUNTRY_OPTIONS, {
     errorMap: () => ({ message: "Select a valid working country" }),

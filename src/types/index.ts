@@ -60,6 +60,8 @@ export interface Member {
   workingCountryNumber?: string;
   email?: string;
   address?: string;
+  nomineeName?: string;
+  nomineeRelation?: string;
   workingCountry?: string;
   workingCountryOther?: string | null;
   zone?: string | null;

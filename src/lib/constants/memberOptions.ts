@@ -31,6 +31,19 @@ export const WORKING_COUNTRY_OPTIONS = [
 
 export const BLOOD_GROUP_OPTIONS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"] as const;
 
+export const NOMINEE_RELATION_OPTIONS = [
+  "Father",
+  "Mother",
+  "Husband",
+  "Wife",
+  "Son",
+  "Daughter",
+  "Brother",
+  "Sister",
+  "Other",
+] as const;
+
 export type Zone = (typeof ZONE_OPTIONS)[number];
 export type WorkingCountry = (typeof WORKING_COUNTRY_OPTIONS)[number];
 export type BloodGroup = (typeof BLOOD_GROUP_OPTIONS)[number];
+export type NomineeRelation = (typeof NOMINEE_RELATION_OPTIONS)[number];
