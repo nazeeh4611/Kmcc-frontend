@@ -72,7 +72,7 @@ export const memberService = {
 
   approve: async (
     id: string,
-    payload: { membershipType: string; membershipStart?: string; password?: string; committeeRole?: string; unit?: string }
+    payload: { membershipStart?: string; password?: string; committeeRole?: string; unit?: string }
   ) => {
     const { data } = await apiClient.post<ApiEnvelope<{ member: Member; temporaryPassword?: string }>>(
       `/members/${id}/approve`,
@@ -95,8 +95,15 @@ export const memberService = {
     return data.data.member;
   },
 
-  renew: async (id: string, payload: { membershipType: string; membershipStart?: string }) => {
+  renew: async (id: string, payload: { membershipStart?: string }) => {
     const { data } = await apiClient.post<ApiEnvelope<{ member: Member }>>(`/members/${id}/renew`, payload);
+    return data.data.member;
+  },
+
+  updateStartDate: async (id: string, membershipStart: string) => {
+    const { data } = await apiClient.post<ApiEnvelope<{ member: Member }>>(`/members/${id}/start-date`, {
+      membershipStart,
+    });
     return data.data.member;
   },
 

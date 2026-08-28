@@ -41,22 +41,6 @@ const Alert = ({
   );
 };
 
-const selectClass =
-  "flex h-11 w-full rounded-xl border border-border bg-white/80 px-4 py-2 text-sm text-foreground shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary transition-all duration-200";
-
-interface MembershipPlan {
-  _id: string;
-  title: string;
-  duration: number;
-  price: number;
-}
-
-const FALLBACK_PLANS: MembershipPlan[] = [
-  { _id: "fallback-1yr", title: "1 Year", duration: 12, price: 500 },
-  { _id: "fallback-3yr", title: "3 Years", duration: 36, price: 1200 },
-  { _id: "fallback-5yr", title: "5 Years", duration: 60, price: 2000 },
-];
-
 const memberService = {
   getById: async (id: string) => {
     const response = await apiClient.get(`/members/${id}`);
@@ -68,7 +52,7 @@ const memberService = {
     });
     return response.data.data.member;
   },
-  approve: async (id: string, data: { membershipType: string; committeeRole: string }) => {
+  approve: async (id: string, data: { membershipStart: string; committeeRole: string }) => {
     const response = await apiClient.post(`/members/${id}/approve`, data);
     return response.data.data;
   },
@@ -88,8 +72,12 @@ const memberService = {
     const response = await apiClient.post(`/members/${id}/reset-password`);
     return response.data.data;
   },
-  renew: async (id: string, data: { membershipType: string }) => {
+  renew: async (id: string, data: { membershipStart: string }) => {
     const response = await apiClient.post(`/members/${id}/renew`, data);
+    return response.data.data.member;
+  },
+  updateStartDate: async (id: string, membershipStart: string) => {
+    const response = await apiClient.post(`/members/${id}/start-date`, { membershipStart });
     return response.data.data.member;
   },
   remove: async (id: string) => {
@@ -106,18 +94,6 @@ const memberService = {
     link.click();
     link.remove();
     window.URL.revokeObjectURL(url);
-  },
-};
-
-const metaService = {
-  listMembershipPlans: async (): Promise<MembershipPlan[]> => {
-    try {
-      const response = await apiClient.get("/membership-plans");
-      const plans = response.data.data?.plans ?? response.data.data ?? [];
-      return Array.isArray(plans) && plans.length > 0 ? plans : FALLBACK_PLANS;
-    } catch {
-      return FALLBACK_PLANS;
-    }
   },
 };
 
@@ -166,11 +142,6 @@ export default function MemberDetailPage() {
     queryKey: ["members", "detail", id],
     queryFn: () => memberService.getById(id),
     enabled: !!id,
-  });
-
-  const { data: plans } = useQuery({
-    queryKey: ["meta", "plans"],
-    queryFn: metaService.listMembershipPlans,
   });
 
   const invalidate = () => {
@@ -270,7 +241,6 @@ export default function MemberDetailPage() {
 
             <PendingApprovalCard
               memberId={id}
-              plans={plans ?? []}
               onDone={(msg) => {
                 setNotice(msg);
                 invalidate();
@@ -305,7 +275,7 @@ export default function MemberDetailPage() {
               </CardContent>
             </Card>
 
-            <ActionsPanel memberId={id} member={member} plans={plans ?? []} withHandlers={withHandlers} />
+            <ActionsPanel memberId={id} member={member} withHandlers={withHandlers} />
           </>
         )}
       </main>
@@ -547,23 +517,23 @@ function EditMemberForm({
   );
 }
 
+const todayDateInput = () => new Date().toISOString().slice(0, 10);
+
 function PendingApprovalCard({
   memberId,
-  plans,
   onDone,
   onError,
 }: {
   memberId: string;
-  plans: MembershipPlan[];
   onDone: (msg: string) => void;
   onError: (msg: string) => void;
 }) {
   const router = useRouter();
-  const [membershipType, setMembershipType] = useState("");
+  const [membershipStart, setMembershipStart] = useState(todayDateInput());
   const [committeeRole, setCommitteeRole] = useState("");
 
   const approveMutation = useMutation({
-    mutationFn: () => memberService.approve(memberId, { membershipType, committeeRole }),
+    mutationFn: () => memberService.approve(memberId, { membershipStart, committeeRole }),
     onSuccess: (data) => {
       const msg = data.temporaryPassword
         ? `Application approved. Temporary password: ${data.temporaryPassword}`
@@ -589,24 +559,19 @@ function PendingApprovalCard({
       </CardHeader>
       <CardContent className="space-y-4 pt-6">
         <p className="text-sm text-muted-foreground">
-          Review the applicant details above, then select a membership plan to approve, or reject the application.
+          Review the applicant details above, then approve to activate their 1-year membership, or reject the
+          application.
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label htmlFor="p_plan">Membership Plan *</Label>
-            <select
-              id="p_plan"
-              className={selectClass}
-              value={membershipType}
-              onChange={(e) => setMembershipType(e.target.value)}
-            >
-              <option value="">Select a plan</option>
-              {plans.map((plan) => (
-                <option key={plan._id} value={plan._id}>
-                  {plan.title} ({plan.duration}mo)
-                </option>
-              ))}
-            </select>
+            <Label htmlFor="p_start">Membership Start Date *</Label>
+            <Input
+              id="p_start"
+              type="date"
+              value={membershipStart}
+              onChange={(e) => setMembershipStart(e.target.value)}
+              className="rounded-xl bg-white"
+            />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="p_role">Committee Role</Label>
@@ -625,8 +590,8 @@ function PendingApprovalCard({
           </Button>
           <Button
             onClick={() => {
-              if (!membershipType) {
-                onError("Please select a membership plan before approving.");
+              if (!membershipStart) {
+                onError("Please choose a membership start date before approving.");
                 return;
               }
               approveMutation.mutate();
@@ -645,16 +610,17 @@ function PendingApprovalCard({
 function ActionsPanel({
   memberId,
   member,
-  plans,
   withHandlers,
 }: {
   memberId: string;
   member: NonNullable<Awaited<ReturnType<typeof memberService.getById>>>;
-  plans: MembershipPlan[];
   withHandlers: <T>(mutationFn: () => Promise<T>, successMsg: string | ((result: T) => string)) => Promise<void>;
 }) {
   const router = useRouter();
-  const [renewPlan, setRenewPlan] = useState("");
+  const [renewStart, setRenewStart] = useState(todayDateInput());
+  const [correctStart, setCorrectStart] = useState(
+    member.membershipStart ? new Date(member.membershipStart).toISOString().slice(0, 10) : todayDateInput()
+  );
   const [busy, setBusy] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -729,24 +695,52 @@ function ActionsPanel({
         </div>
 
         <div className="flex flex-wrap items-end gap-3 border-t border-border pt-4">
-          <div className="w-64 space-y-1.5">
-            <Label htmlFor="renewPlan">Renew Membership</Label>
-            <select id="renewPlan" className={selectClass} value={renewPlan} onChange={(e) => setRenewPlan(e.target.value)}>
-              <option value="">Select a plan</option>
-              {plans.map((plan) => (
-                <option key={plan._id} value={plan._id}>
-                  {plan.title} ({plan.duration}mo)
-                </option>
-              ))}
-            </select>
+          <div className="w-56 space-y-1.5">
+            <Label htmlFor="renewStart">Renew Membership — Start Date</Label>
+            <Input
+              id="renewStart"
+              type="date"
+              value={renewStart}
+              onChange={(e) => setRenewStart(e.target.value)}
+              className="rounded-xl bg-white"
+            />
           </div>
           <Button
-            disabled={busy || !renewPlan}
-            onClick={() => run(() => memberService.renew(memberId, { membershipType: renewPlan }), "Membership renewed successfully")}
+            disabled={busy || !renewStart}
+            onClick={() => run(() => memberService.renew(memberId, { membershipStart: renewStart }), "Membership renewed successfully")}
             className="rounded-xl bg-primary hover:bg-primary/90"
           >
-            🔄 Renew
+            🔄 Renew (1 Year)
           </Button>
+        </div>
+
+        <div className="flex flex-wrap items-end gap-3 border-t border-border pt-4">
+          <div className="w-56 space-y-1.5">
+            <Label htmlFor="correctStart">Correct Start Date</Label>
+            <Input
+              id="correctStart"
+              type="date"
+              value={correctStart}
+              onChange={(e) => setCorrectStart(e.target.value)}
+              className="rounded-xl bg-white"
+              disabled={!member.membershipType}
+            />
+          </div>
+          <Button
+            variant="outline"
+            disabled={busy || !correctStart || !member.membershipType}
+            onClick={() =>
+              run(() => memberService.updateStartDate(memberId, correctStart), "Membership start date updated")
+            }
+            className="rounded-xl"
+          >
+            📅 Update Start Date
+          </Button>
+          <p className="basis-full text-xs text-muted-foreground">
+            Fixes the recorded start date (and recalculates the expiry) for a member who already has a plan —
+            without starting a new membership cycle. Use this for members whose real join date predates this
+            system.
+          </p>
         </div>
       </CardContent>
 
