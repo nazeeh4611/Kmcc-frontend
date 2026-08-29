@@ -58,13 +58,18 @@ export default function MemberDashboardPage() {
     <main className="min-h-screen bg-surface pb-16">
       <header className="border-b border-border bg-white">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-5 sm:px-6">
-          <div>
-            <p className="font-utility text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-              Member Dashboard
-            </p>
-            <h1 className="mt-1 font-display text-2xl font-bold text-foreground">
-              {isLoading ? "Welcome back" : member?.fullName ?? "Welcome back"}
-            </h1>
+          <div className="flex items-center gap-3">
+            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full ring-2 ring-primary/10">
+              <Image src="/kmcc.avif" alt="Global KMCC Logo" fill sizes="48px" className="object-cover" />
+            </div>
+            <div>
+              <p className="font-utility text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+                Member Dashboard
+              </p>
+              <h1 className="mt-1 font-display text-2xl font-bold text-foreground">
+                {isLoading ? "Welcome back" : member?.fullName ?? "Welcome back"}
+              </h1>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" onClick={() => router.push("/")}>

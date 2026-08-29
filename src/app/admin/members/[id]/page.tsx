@@ -200,19 +200,24 @@ export default function MemberDetailPage() {
 
       <main className="mx-auto max-w-4xl px-6 py-8">
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p className="font-utility text-sm font-semibold text-primary">Member Management</p>
-            <div className="flex items-center gap-3">
-              <h1 className="font-display text-3xl font-bold text-foreground">{member.fullName}</h1>
-              <MemberStatusBadge status={member.membershipStatus} />
+          <div className="flex items-center gap-4">
+            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full ring-2 ring-primary/10">
+              <Image src="/kmcc.avif" alt="Global KMCC Logo" fill sizes="56px" className="object-cover" />
             </div>
-            <div className="mt-1 flex items-center gap-3">
-              <span className="font-mono text-sm text-muted-foreground">{member.membershipId}</span>
-              {member.membershipExpiry && (
-                <span className="text-sm text-muted-foreground">
-                  Expires: {new Date(member.membershipExpiry).toLocaleDateString()}
-                </span>
-              )}
+            <div>
+              <p className="font-utility text-sm font-semibold text-primary">Member Management</p>
+              <div className="flex items-center gap-3">
+                <h1 className="font-display text-3xl font-bold text-foreground">{member.fullName}</h1>
+                <MemberStatusBadge status={member.membershipStatus} />
+              </div>
+              <div className="mt-1 flex items-center gap-3">
+                <span className="font-mono text-sm text-muted-foreground">{member.membershipId}</span>
+                {member.membershipExpiry && (
+                  <span className="text-sm text-muted-foreground">
+                    Expires: {new Date(member.membershipExpiry).toLocaleDateString()}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
           <Button variant="outline" onClick={() => router.push("/admin/members")} className="gap-2">
