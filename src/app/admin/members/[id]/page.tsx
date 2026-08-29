@@ -16,7 +16,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Dialog } from "@/components/ui/dialog";
 import { MemberStatusBadge } from "@/components/MemberStatusBadge";
+import { CheckCircle2 } from "lucide-react";
 
 const Alert = ({
   children,
@@ -137,6 +139,7 @@ export default function MemberDetailPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [approvalSuccess, setApprovalSuccess] = useState<string | null>(null);
 
   const { data: member, isLoading } = useQuery({
     queryKey: ["members", "detail", id],
@@ -241,8 +244,8 @@ export default function MemberDetailPage() {
 
             <PendingApprovalCard
               memberId={id}
-              onDone={(msg) => {
-                setNotice(msg);
+              onApproved={(msg) => {
+                setApprovalSuccess(msg);
                 invalidate();
               }}
               onError={setError}
@@ -279,7 +282,51 @@ export default function MemberDetailPage() {
           </>
         )}
       </main>
+
+      <ApprovalSuccessModal
+        open={!!approvalSuccess}
+        message={approvalSuccess || ""}
+        onClose={() => setApprovalSuccess(null)}
+        onBackToList={() => router.push("/admin/members")}
+      />
     </div>
+  );
+}
+
+function ApprovalSuccessModal({
+  open,
+  message,
+  onClose,
+  onBackToList,
+}: {
+  open: boolean;
+  message: string;
+  onClose: () => void;
+  onBackToList: () => void;
+}) {
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      footer={
+        <>
+          <Button variant="outline" onClick={onBackToList} className="rounded-xl">
+            ← Back to member list
+          </Button>
+          <Button onClick={onClose} className="rounded-xl bg-primary hover:bg-primary/90">
+            View
+          </Button>
+        </>
+      }
+    >
+      <div className="flex flex-col items-center gap-3 py-2 text-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-green-600">
+          <CheckCircle2 className="h-8 w-8" />
+        </div>
+        <h3 className="text-lg font-semibold text-foreground">Application Approved!</h3>
+        <p className="text-sm text-muted-foreground">{message}</p>
+      </div>
+    </Dialog>
   );
 }
 
@@ -521,11 +568,11 @@ const todayDateInput = () => new Date().toISOString().slice(0, 10);
 
 function PendingApprovalCard({
   memberId,
-  onDone,
+  onApproved,
   onError,
 }: {
   memberId: string;
-  onDone: (msg: string) => void;
+  onApproved: (msg: string) => void;
   onError: (msg: string) => void;
 }) {
   const router = useRouter();
@@ -538,7 +585,7 @@ function PendingApprovalCard({
       const msg = data.temporaryPassword
         ? `Application approved. Temporary password: ${data.temporaryPassword}`
         : "Application approved successfully.";
-      onDone(msg);
+      onApproved(msg);
     },
     onError: (err) => onError(extractErrorMessage(err)),
   });
