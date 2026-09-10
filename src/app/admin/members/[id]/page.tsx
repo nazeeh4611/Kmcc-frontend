@@ -74,8 +74,8 @@ const memberService = {
     const response = await apiClient.post(`/members/${id}/reset-password`);
     return response.data.data;
   },
-  renew: async (id: string, data: { membershipStart: string }) => {
-    const response = await apiClient.post(`/members/${id}/renew`, data);
+  renew: async (id: string) => {
+    const response = await apiClient.post(`/members/${id}/renew`, {});
     return response.data.data.member;
   },
   updateStartDate: async (id: string, membershipStart: string) => {
@@ -614,7 +614,7 @@ function PendingApprovalCard({
           application.
         </p>
         <p className="rounded-xl bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
-          Membership period: <span className="font-medium text-foreground">01 Jan 2027 – 31 Dec 2027</span> (fixed for all members)
+          Membership period: <span className="font-medium text-foreground">01 Jan 2021 – 31 Dec 2027</span> (fixed for all members until manually corrected)
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
@@ -655,7 +655,6 @@ function ActionsPanel({
   withHandlers: <T>(mutationFn: () => Promise<T>, successMsg: string | ((result: T) => string)) => Promise<void>;
 }) {
   const router = useRouter();
-  const [renewStart, setRenewStart] = useState(todayDateInput());
   const [correctStart, setCorrectStart] = useState(
     member.membershipStart ? new Date(member.membershipStart).toISOString().slice(0, 10) : todayDateInput()
   );
@@ -733,19 +732,12 @@ function ActionsPanel({
         </div>
 
         <div className="flex flex-wrap items-end gap-3 border-t border-border pt-4">
-          <div className="w-56 space-y-1.5">
-            <Label htmlFor="renewStart">Renew Membership — Start Date</Label>
-            <Input
-              id="renewStart"
-              type="date"
-              value={renewStart}
-              onChange={(e) => setRenewStart(e.target.value)}
-              className="rounded-xl bg-white"
-            />
-          </div>
+          <p className="text-xs text-muted-foreground">
+            Renewing keeps the member&apos;s start date unchanged — use &quot;Correct Start Date&quot; below to change it.
+          </p>
           <Button
-            disabled={busy || !renewStart}
-            onClick={() => run(() => memberService.renew(memberId, { membershipStart: renewStart }), "Membership renewed successfully")}
+            disabled={busy}
+            onClick={() => run(() => memberService.renew(memberId), "Membership renewed successfully")}
             className="rounded-xl bg-primary hover:bg-primary/90"
           >
             🔄 Renew (1 Year)
