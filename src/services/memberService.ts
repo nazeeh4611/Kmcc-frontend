@@ -72,7 +72,7 @@ export const memberService = {
 
   approve: async (
     id: string,
-    payload: { membershipStart?: string; password?: string; committeeRole?: string; unit?: string }
+    payload: { password?: string; committeeRole?: string; unit?: string }
   ) => {
     const { data } = await apiClient.post<ApiEnvelope<{ member: Member; temporaryPassword?: string }>>(
       `/members/${id}/approve`,

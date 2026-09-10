@@ -115,9 +115,10 @@ export default function MemberDashboardPage() {
                 <div className="mt-3">
                   <MemberStatusBadge status={member.membershipStatus} />
                 </div>
-                {member.membershipExpiry && (
+                {member.membershipStart && member.membershipExpiry && (
                   <p className="mt-2 text-xs text-muted-foreground">
-                    Expires on {new Date(member.membershipExpiry).toLocaleDateString()}
+                    {new Date(member.membershipStart).toLocaleDateString()} –{" "}
+                    {new Date(member.membershipExpiry).toLocaleDateString()}
                   </p>
                 )}
 
@@ -178,6 +179,11 @@ export default function MemberDashboardPage() {
                 <CardContent className="grid grid-cols-1 gap-4 p-0 sm:grid-cols-2">
                   <DetailRow icon={Hash} label="Membership ID" value={member.membershipId} />
                   <DetailRow icon={Calendar} label="Status" value={member.membershipStatus} />
+                  <DetailRow
+                    icon={Calendar}
+                    label="Joined On"
+                    value={member.membershipStart ? new Date(member.membershipStart).toLocaleDateString() : "—"}
+                  />
                   <DetailRow
                     icon={Calendar}
                     label="Expires On"

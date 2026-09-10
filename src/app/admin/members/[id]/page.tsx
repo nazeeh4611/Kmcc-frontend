@@ -54,7 +54,7 @@ const memberService = {
     });
     return response.data.data.member;
   },
-  approve: async (id: string, data: { membershipStart: string; committeeRole: string }) => {
+  approve: async (id: string, data: { committeeRole: string }) => {
     const response = await apiClient.post(`/members/${id}/approve`, data);
     return response.data.data;
   },
@@ -581,11 +581,10 @@ function PendingApprovalCard({
   onError: (msg: string) => void;
 }) {
   const router = useRouter();
-  const [membershipStart, setMembershipStart] = useState(todayDateInput());
   const [committeeRole, setCommitteeRole] = useState("");
 
   const approveMutation = useMutation({
-    mutationFn: () => memberService.approve(memberId, { membershipStart, committeeRole }),
+    mutationFn: () => memberService.approve(memberId, { committeeRole }),
     onSuccess: (data) => {
       const msg = data.temporaryPassword
         ? `Application approved. Temporary password: ${data.temporaryPassword}`
@@ -611,20 +610,13 @@ function PendingApprovalCard({
       </CardHeader>
       <CardContent className="space-y-4 pt-6">
         <p className="text-sm text-muted-foreground">
-          Review the applicant details above, then approve to activate their 1-year membership, or reject the
+          Review the applicant details above, then approve to activate their membership, or reject the
           application.
         </p>
+        <p className="rounded-xl bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
+          Membership period: <span className="font-medium text-foreground">01 Jan 2027 – 31 Dec 2027</span> (fixed for all members)
+        </p>
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="p_start">Membership Start Date *</Label>
-            <Input
-              id="p_start"
-              type="date"
-              value={membershipStart}
-              onChange={(e) => setMembershipStart(e.target.value)}
-              className="rounded-xl bg-white"
-            />
-          </div>
           <div className="space-y-1.5">
             <Label htmlFor="p_role">Committee Role</Label>
             <Input id="p_role" value={committeeRole} onChange={(e) => setCommitteeRole(e.target.value)} className="rounded-xl" placeholder="Optional" />
@@ -641,13 +633,7 @@ function PendingApprovalCard({
             {rejectMutation.isPending ? "Rejecting..." : "Reject"}
           </Button>
           <Button
-            onClick={() => {
-              if (!membershipStart) {
-                onError("Please choose a membership start date before approving.");
-                return;
-              }
-              approveMutation.mutate();
-            }}
+            onClick={() => approveMutation.mutate()}
             disabled={approveMutation.isPending || rejectMutation.isPending}
             className="rounded-xl bg-green-600 hover:bg-green-700"
           >
