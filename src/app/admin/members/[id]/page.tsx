@@ -668,6 +668,14 @@ function ActionsPanel({
     setBusy(false);
   };
 
+  // Renewal only opens up in the last month before expiry (or once it has
+  // already expired) — no point letting an admin push the expiry a year
+  // further out while there are still months left on the current cycle.
+  const daysUntilExpiry = member.membershipExpiry
+    ? Math.ceil((new Date(member.membershipExpiry).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    : null;
+  const canRenew = Boolean(member.membershipType) && (member.isExpired || (daysUntilExpiry !== null && daysUntilExpiry <= 31));
+
   return (
     <Card className="mb-6 overflow-hidden border-border shadow-sm">
       <CardHeader className="border-b border-border bg-primary/5">
@@ -731,18 +739,28 @@ function ActionsPanel({
           </Button>
         </div>
 
-        <div className="flex flex-wrap items-end gap-3 border-t border-border pt-4">
-          <p className="text-xs text-muted-foreground">
-            Renewing keeps the member&apos;s start date unchanged — use &quot;Correct Start Date&quot; below to change it.
-          </p>
-          <Button
-            disabled={busy}
-            onClick={() => run(() => memberService.renew(memberId), "Membership renewed successfully")}
-            className="rounded-xl bg-primary hover:bg-primary/90"
-          >
-            🔄 Renew (1 Year)
-          </Button>
-        </div>
+        {canRenew ? (
+          <div className="flex flex-wrap items-end gap-3 border-t border-border pt-4">
+            <p className="text-xs text-muted-foreground">
+              Renewing keeps the member&apos;s start date unchanged and moves the expiry to 31 Dec{" "}
+              {(member.membershipExpiry ? new Date(member.membershipExpiry).getUTCFullYear() : new Date().getUTCFullYear()) + 1}.
+            </p>
+            <Button
+              disabled={busy}
+              onClick={() => run(() => memberService.renew(memberId), "Membership renewed successfully")}
+              className="rounded-xl bg-primary hover:bg-primary/90"
+            >
+              🔄 Renew (1 Year)
+            </Button>
+          </div>
+        ) : (
+          member.membershipType && (
+            <p className="border-t border-border pt-4 text-xs text-muted-foreground">
+              Renewal opens up in the last month before expiry
+              {member.membershipExpiry ? ` (${new Date(member.membershipExpiry).toLocaleDateString()})` : ""}.
+            </p>
+          )
+        )}
 
         <div className="flex flex-wrap items-end gap-3 border-t border-border pt-4">
           <div className="w-56 space-y-1.5">
