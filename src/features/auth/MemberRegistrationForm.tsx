@@ -9,6 +9,7 @@ import { CheckCircle2 } from "lucide-react";
 import { publicService } from "@/services/publicService";
 import { memberFormSchema, type MemberFormInput } from "@/lib/validators/memberSchema";
 import { MemberFormFields } from "@/features/member/MemberFormFields";
+import { applyServerFieldErrors, scrollToFirstErrorField } from "@/lib/scrollToError";
 
 const extractErrorMessage = (error: unknown): string => {
   if (axios.isAxiosError(error)) {
@@ -37,6 +38,7 @@ export function MemberRegistrationForm() {
     handleSubmit,
     watch,
     setValue,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<MemberFormInput>({
     resolver: zodResolver(memberFormSchema),
@@ -72,6 +74,7 @@ export function MemberRegistrationForm() {
       setApplicationId(result.applicationId);
     } catch (error) {
       setServerError(extractErrorMessage(error));
+      applyServerFieldErrors(error, setError);
     }
   };
 
@@ -115,7 +118,10 @@ export function MemberRegistrationForm() {
         <p className="font-body text-slate">Membership Form</p>
       </div>
       <div className="px-8 pb-8 pt-6">
-        <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+        <form
+          onSubmit={handleSubmit(onSubmit, scrollToFirstErrorField)}
+          className="grid grid-cols-1 gap-5 sm:grid-cols-2"
+        >
           {serverError && (
             <div className="sm:col-span-2">
               <div className="flex items-center gap-3 rounded-md border border-maroon/30 bg-maroon/5 p-4 text-maroon shadow-sm">

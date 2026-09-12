@@ -10,6 +10,7 @@ import { AdminNav } from "@/components/AdminNav";
 import { adminApiClient, extractErrorMessage, type ApiEnvelope } from "@/lib/adminApiClient";
 import { memberFormSchema, type MemberFormInput } from "@/lib/validators/memberSchema";
 import { MemberFormFields } from "@/features/member/MemberFormFields";
+import { applyServerFieldErrors, scrollToFirstErrorField } from "@/lib/scrollToError";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { Member } from "@/types";
@@ -33,6 +34,7 @@ export default function NewMemberPage() {
     handleSubmit,
     watch,
     setValue,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<MemberFormInput>({
     resolver: zodResolver(memberFormSchema),
@@ -49,7 +51,10 @@ export default function NewMemberPage() {
       queryClient.invalidateQueries({ queryKey: ["members"] });
       setCreated(member);
     },
-    onError: (err) => setServerError(extractErrorMessage(err)),
+    onError: (err) => {
+      setServerError(extractErrorMessage(err));
+      applyServerFieldErrors(err, setError);
+    },
   });
 
   const onSubmit = (values: MemberFormInput) => {
@@ -125,7 +130,7 @@ export default function NewMemberPage() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit(onSubmit, scrollToFirstErrorField)}>
           <Card className="overflow-hidden border-border shadow-sm">
             <CardHeader className="border-b border-border bg-primary/5">
               <CardTitle className="flex items-center gap-2">

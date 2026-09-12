@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { adminApiClient as apiClient } from "@/lib/adminApiClient";
 import { memberEditFormSchema, type MemberEditFormInput } from "@/lib/validators/memberSchema";
 import { MemberFormFields } from "@/features/member/MemberFormFields";
+import { applyServerFieldErrors, scrollToFirstErrorField } from "@/lib/scrollToError";
 import Image from "next/image";
 import { AdminNav } from "@/components/AdminNav";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -469,6 +470,7 @@ function EditMemberForm({
     handleSubmit,
     watch,
     setValue,
+    setError: setFieldError,
     formState: { errors, isSubmitting },
   } = useForm<MemberEditFormInput>({
     resolver: zodResolver(memberEditFormSchema),
@@ -498,7 +500,10 @@ function EditMemberForm({
   const updateMutation = useMutation({
     mutationFn: (formData: FormData) => memberService.update(memberId, formData),
     onSuccess: onSaved,
-    onError: (err) => onError(extractErrorMessage(err)),
+    onError: (err) => {
+      onError(extractErrorMessage(err));
+      applyServerFieldErrors(err, setFieldError);
+    },
   });
 
   const onSubmit = (values: MemberEditFormInput) => {
@@ -526,7 +531,7 @@ function EditMemberForm({
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit, scrollToFirstErrorField)} className="space-y-4">
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
         <Label htmlFor="membershipId" className="text-amber-900">
           Membership ID <span className="font-normal text-amber-700">(admin only)</span>
