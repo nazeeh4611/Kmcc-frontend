@@ -619,7 +619,7 @@ function PendingApprovalCard({
           application.
         </p>
         <p className="rounded-xl bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
-          Membership period: <span className="font-medium text-foreground">01 Jan 2021 – 31 Dec 2027</span> (fixed for all members until manually corrected)
+          Membership period: <span className="font-medium text-foreground">01 Jan 2027 – 31 Dec 2027</span> (fixed for all members until manually corrected)
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
