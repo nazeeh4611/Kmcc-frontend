@@ -22,6 +22,7 @@ import {
 import { useMemberAuth } from "@/store/memberAuthContext";
 import { memberAuthService } from "@/services/authService";
 import { extractErrorMessage } from "@/lib/memberApiClient";
+import { formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -117,8 +118,8 @@ export default function MemberDashboardPage() {
                 </div>
                 {member.membershipStart && member.membershipExpiry && (
                   <p className="mt-2 text-xs text-muted-foreground">
-                    {new Date(member.membershipStart).toLocaleDateString()} –{" "}
-                    {new Date(member.membershipExpiry).toLocaleDateString()}
+                    {formatDate(member.membershipStart)} –{" "}
+                    {formatDate(member.membershipExpiry)}
                   </p>
                 )}
 
@@ -142,7 +143,7 @@ export default function MemberDashboardPage() {
                   <DetailRow
                     icon={Cake}
                     label="Date of Birth"
-                    value={member.dob ? new Date(member.dob).toLocaleDateString() : "—"}
+                    value={formatDate(member.dob)}
                   />
                   <DetailRow icon={Droplet} label="Blood Group" value={member.bloodGroup} />
                 </CardContent>
@@ -182,12 +183,12 @@ export default function MemberDashboardPage() {
                   <DetailRow
                     icon={Calendar}
                     label="Joined On"
-                    value={member.membershipStart ? new Date(member.membershipStart).toLocaleDateString() : "—"}
+                    value={formatDate(member.membershipStart)}
                   />
                   <DetailRow
                     icon={Calendar}
                     label="Expires On"
-                    value={member.membershipExpiry ? new Date(member.membershipExpiry).toLocaleDateString() : "—"}
+                    value={formatDate(member.membershipExpiry)}
                   />
                 </CardContent>
               </Card>

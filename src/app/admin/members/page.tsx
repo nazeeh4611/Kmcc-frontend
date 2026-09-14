@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { AdminNav } from "@/components/AdminNav";
 import { adminApiClient, extractErrorMessage } from "@/lib/adminApiClient";
+import { formatDate } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -293,7 +294,7 @@ export default function AdminMembersPage() {
                       <td className="px-4 py-3">
                         <MemberStatusBadge status={member.membershipStatus} />
                       </td>
-                      <td className="px-4 py-3">{member.dob ? new Date(member.dob).toLocaleDateString() : "—"}</td>
+                      <td className="px-4 py-3">{formatDate(member.dob)}</td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-1">
                           <Button

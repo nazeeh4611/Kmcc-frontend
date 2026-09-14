@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { adminApiClient as apiClient } from "@/lib/adminApiClient";
+import { formatDate } from "@/lib/utils";
 import { memberEditFormSchema, type MemberEditFormInput } from "@/lib/validators/memberSchema";
 import { MemberFormFields } from "@/features/member/MemberFormFields";
 import { applyServerFieldErrors, scrollToFirstErrorField } from "@/lib/scrollToError";
@@ -215,7 +216,7 @@ export default function MemberDetailPage() {
                 <span className="font-mono text-sm text-muted-foreground">{member.membershipId}</span>
                 {member.membershipExpiry && (
                   <span className="text-sm text-muted-foreground">
-                    Expires: {new Date(member.membershipExpiry).toLocaleDateString()}
+                    Expires: {formatDate(member.membershipExpiry)}
                   </span>
                 )}
               </div>
@@ -362,7 +363,7 @@ function ProfileView({
   const personalFields: [string, string | number | null | undefined][] = [
     ["Full Name", member.fullName],
     ["Father's Name", member.fatherName],
-    ["Date of Birth", member.dob ? new Date(member.dob).toLocaleDateString() : "—"],
+    ["Date of Birth", formatDate(member.dob)],
     ["Blood Group", member.bloodGroup],
   ];
 
@@ -390,8 +391,8 @@ function ProfileView({
       "Membership Plan",
       typeof member.membershipType === "object" && member.membershipType ? member.membershipType.title : member.membershipType || "—",
     ],
-    ["Membership Start", member.membershipStart ? new Date(member.membershipStart).toLocaleDateString() : "—"],
-    ["Membership Expiry", member.membershipExpiry ? new Date(member.membershipExpiry).toLocaleDateString() : "—"],
+    ["Membership Start", formatDate(member.membershipStart)],
+    ["Membership Expiry", formatDate(member.membershipExpiry)],
     ["Days Remaining", member.daysRemaining],
   ];
 
@@ -762,7 +763,7 @@ function ActionsPanel({
           member.membershipType && (
             <p className="border-t border-border pt-4 text-xs text-muted-foreground">
               Renewal opens up in the last month before expiry
-              {member.membershipExpiry ? ` (${new Date(member.membershipExpiry).toLocaleDateString()})` : ""}.
+              {member.membershipExpiry ? ` (${formatDate(member.membershipExpiry)})` : ""}.
             </p>
           )
         )}
