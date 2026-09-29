@@ -340,7 +340,6 @@ export default function AdminBannersPage() {
     }
   };
 
-  const descriptionLeft = DESCRIPTION_MAX - description.length;
 
   return (
     <div className="min-h-screen bg-surface">
@@ -443,17 +442,13 @@ export default function AdminBannersPage() {
                   <label htmlFor="bannerDescription" className="text-sm font-medium text-foreground">
                     Description (optional)
                   </label>
-                  <span
-                    className={`text-xs ${descriptionLeft < 100 ? "text-red-600" : "text-muted-foreground"}`}
-                    aria-live="polite"
-                  >
-                    {description.length}/{DESCRIPTION_MAX}
-                  </span>
+                  <span className="text-xs text-muted-foreground" aria-live="polite">
+  {description.length} characters
+</span>
                 </div>
                 <textarea
                   id="bannerDescription"
                   value={description}
-                  maxLength={DESCRIPTION_MAX}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Shown in full when visitors click the banner text"
                   rows={6}
