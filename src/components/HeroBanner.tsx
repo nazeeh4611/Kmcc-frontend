@@ -32,7 +32,7 @@ export default function HeroBanner() {
             id: slide._id,
             url: slide.image.url,
             alt: slide.title,
-            description: slide.description ?? "",
+            description: (slide.description ?? "").trim(),
             createdAt: slide.createdAt,
           }))
         );
@@ -53,8 +53,7 @@ export default function HeroBanner() {
     [banners.length]
   );
 
-  // Autoplay pauses while the text popup is open, otherwise the slide
-  // (and the text) would change under the reader after 5 seconds.
+  // Autoplay pauses while the popup is open so the text doesn't change under the reader.
   useEffect(() => {
     if (banners.length <= 1 || textOpen) return;
     const interval = setInterval(() => {
@@ -79,7 +78,7 @@ export default function HeroBanner() {
   }, [textOpen]);
 
   const active = banners[current];
-  const popupBody = active?.description || active?.alt || "";
+  const description = active?.description ?? "";
 
   return (
     <div className="relative h-[420px] w-full overflow-hidden rounded-2xl bg-green-900 shadow-card-lg sm:h-[520px] lg:h-[640px]">
@@ -140,36 +139,37 @@ export default function HeroBanner() {
             </>
           )}
 
-          <div className="absolute bottom-4 left-4 right-4 z-20 flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/20 px-4 py-3 backdrop-blur-sm">
-            {/* The text itself is the click target */}
-            <button
-              type="button"
-              onClick={() => setTextOpen(true)}
-              aria-haspopup="dialog"
-              className="min-w-0 flex-1 cursor-pointer text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-brass/60"
-            >
-              <span className="block truncate font-utility text-[10px] font-semibold uppercase tracking-[0.2em] text-brass">
-                {active?.alt || "Global KMCC"}
-              </span>
-              {active?.description && (
-                <span className="mt-0.5 block truncate text-xs text-white/70">
-                  {active.description}
-                </span>
-              )}
-            </button>
-            <div className="flex flex-shrink-0 gap-1.5">
-              {banners.map((banner, index) => (
+          {/* Bar only renders if there's something to show: a description or multiple slides */}
+          {(description || banners.length > 1) && (
+            <div className="absolute bottom-4 left-4 right-4 z-20 flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/20 px-4 py-3 backdrop-blur-sm">
+              {description ? (
                 <button
-                  key={banner.id}
-                  onClick={() => goTo(index)}
-                  aria-label={`Go to banner ${index + 1}`}
-                  className={`h-1.5 rounded-full transition-all duration-300 ${
-                    index === current ? "w-5 bg-brass" : "w-1.5 bg-brass/40"
-                  }`}
-                />
-              ))}
+                  type="button"
+                  onClick={() => setTextOpen(true)}
+                  aria-haspopup="dialog"
+                  className="min-w-0 flex-1 cursor-pointer text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-brass/60"
+                >
+                  <span className="block truncate text-sm font-medium text-brass">{description}</span>
+                </button>
+              ) : (
+                <span className="flex-1" />
+              )}
+              {banners.length > 1 && (
+                <div className="flex flex-shrink-0 gap-1.5">
+                  {banners.map((banner, index) => (
+                    <button
+                      key={banner.id}
+                      onClick={() => goTo(index)}
+                      aria-label={`Go to banner ${index + 1}`}
+                      className={`h-1.5 rounded-full transition-all duration-300 ${
+                        index === current ? "w-5 bg-brass" : "w-1.5 bg-brass/40"
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
-          </div>
+          )}
         </>
       ) : (
         <>
@@ -182,43 +182,38 @@ export default function HeroBanner() {
         </>
       )}
 
-      {/* Full-text popup: blurred backdrop, white text. Portaled to <body> so the
-          hero's overflow-hidden / rounded corners can't clip it. */}
+      {/* Full-text popup: blurred backdrop, white description only. Portaled to <body>
+          so the hero's overflow-hidden / rounded corners can't clip it. */}
       {mounted &&
         textOpen &&
-        active &&
+        description &&
         createPortal(
           <div
             role="dialog"
             aria-modal="true"
-            aria-label={active.alt || "Banner details"}
+            aria-label="Banner details"
             onClick={() => setTextOpen(false)}
             className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4 backdrop-blur-md sm:p-8"
           >
+            <button
+              type="button"
+              onClick={() => setTextOpen(false)}
+              aria-label="Close"
+              autoFocus
+              className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border border-white/30 bg-black/30 text-white transition-colors hover:bg-black/50 sm:right-8 sm:top-8"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+
             <div
               onClick={(e) => e.stopPropagation()}
-              className="relative max-h-[85vh] w-full max-w-2xl overflow-y-auto overscroll-contain px-2 py-4 text-white"
+              className="max-h-[80vh] w-full max-w-2xl overflow-y-auto overscroll-contain px-2 py-4 text-white"
             >
-              <button
-                type="button"
-                onClick={() => setTextOpen(false)}
-                aria-label="Close"
-                autoFocus
-                className="sticky top-0 ml-auto flex h-9 w-9 items-center justify-center rounded-full border border-white/30 bg-black/30 text-white transition-colors hover:bg-black/50"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-
-              {active.description && active.alt && (
-                <h3 className="mb-4 font-display text-xl font-semibold text-white sm:text-2xl">
-                  {active.alt}
-                </h3>
-              )}
               <p className="whitespace-pre-line break-words text-base leading-relaxed text-white sm:text-lg">
-                {popupBody}
+                {description}
               </p>
             </div>
           </div>,
