@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { publicApiClient } from "@/lib/publicApiClient";
 
@@ -8,6 +9,7 @@ type BannerImage = {
   id: string;
   url: string;
   alt: string;
+  description: string;
   createdAt: string;
 };
 
@@ -15,6 +17,10 @@ export default function HeroBanner() {
   const [banners, setBanners] = useState<BannerImage[]>([]);
   const [current, setCurrent] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [textOpen, setTextOpen] = useState(false);
+  const [mounted, setMounted] = useState(false); // portal needs document
+
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     const load = async () => {
@@ -26,6 +32,7 @@ export default function HeroBanner() {
             id: slide._id,
             url: slide.image.url,
             alt: slide.title,
+            description: slide.description ?? "",
             createdAt: slide.createdAt,
           }))
         );
@@ -46,13 +53,33 @@ export default function HeroBanner() {
     [banners.length]
   );
 
+  // Autoplay pauses while the text popup is open, otherwise the slide
+  // (and the text) would change under the reader after 5 seconds.
   useEffect(() => {
-    if (banners.length <= 1) return;
+    if (banners.length <= 1 || textOpen) return;
     const interval = setInterval(() => {
       setCurrent((prev) => (prev + 1) % banners.length);
     }, 5000);
     return () => clearInterval(interval);
-  }, [banners.length]);
+  }, [banners.length, textOpen]);
+
+  // Escape to close + lock page scroll while the popup is open.
+  useEffect(() => {
+    if (!textOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setTextOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [textOpen]);
+
+  const active = banners[current];
+  const popupBody = active?.description || active?.alt || "";
 
   return (
     <div className="relative h-[420px] w-full overflow-hidden rounded-2xl bg-green-900 shadow-card-lg sm:h-[520px] lg:h-[640px]">
@@ -94,6 +121,7 @@ export default function HeroBanner() {
             <>
               <button
                 onClick={() => goTo(current - 1)}
+                aria-label="Previous banner"
                 className="absolute left-3 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/30 text-paper backdrop-blur-sm transition-all hover:bg-black/50"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
@@ -102,6 +130,7 @@ export default function HeroBanner() {
               </button>
               <button
                 onClick={() => goTo(current + 1)}
+                aria-label="Next banner"
                 className="absolute right-3 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/30 text-paper backdrop-blur-sm transition-all hover:bg-black/50"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
@@ -111,15 +140,29 @@ export default function HeroBanner() {
             </>
           )}
 
-          <div className="absolute bottom-4 left-4 right-4 z-20 flex items-center justify-between rounded-xl border border-white/10 bg-black/20 px-4 py-3 backdrop-blur-sm">
-            <span className="truncate pr-3 font-utility text-[10px] font-semibold uppercase tracking-[0.2em] text-brass">
-              {banners[current]?.alt || "Global KMCC"}
-            </span>
+          <div className="absolute bottom-4 left-4 right-4 z-20 flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/20 px-4 py-3 backdrop-blur-sm">
+            {/* The text itself is the click target */}
+            <button
+              type="button"
+              onClick={() => setTextOpen(true)}
+              aria-haspopup="dialog"
+              className="min-w-0 flex-1 cursor-pointer text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-brass/60"
+            >
+              <span className="block truncate font-utility text-[10px] font-semibold uppercase tracking-[0.2em] text-brass">
+                {active?.alt || "Global KMCC"}
+              </span>
+              {active?.description && (
+                <span className="mt-0.5 block truncate text-xs text-white/70">
+                  {active.description}
+                </span>
+              )}
+            </button>
             <div className="flex flex-shrink-0 gap-1.5">
-              {banners.map((_, index) => (
+              {banners.map((banner, index) => (
                 <button
-                  key={index}
+                  key={banner.id}
                   onClick={() => goTo(index)}
+                  aria-label={`Go to banner ${index + 1}`}
                   className={`h-1.5 rounded-full transition-all duration-300 ${
                     index === current ? "w-5 bg-brass" : "w-1.5 bg-brass/40"
                   }`}
@@ -138,6 +181,49 @@ export default function HeroBanner() {
           </div>
         </>
       )}
+
+      {/* Full-text popup: blurred backdrop, white text. Portaled to <body> so the
+          hero's overflow-hidden / rounded corners can't clip it. */}
+      {mounted &&
+        textOpen &&
+        active &&
+        createPortal(
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={active.alt || "Banner details"}
+            onClick={() => setTextOpen(false)}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4 backdrop-blur-md sm:p-8"
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="relative max-h-[85vh] w-full max-w-2xl overflow-y-auto overscroll-contain px-2 py-4 text-white"
+            >
+              <button
+                type="button"
+                onClick={() => setTextOpen(false)}
+                aria-label="Close"
+                autoFocus
+                className="sticky top-0 ml-auto flex h-9 w-9 items-center justify-center rounded-full border border-white/30 bg-black/30 text-white transition-colors hover:bg-black/50"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+
+              {active.description && active.alt && (
+                <h3 className="mb-4 font-display text-xl font-semibold text-white sm:text-2xl">
+                  {active.alt}
+                </h3>
+              )}
+              <p className="whitespace-pre-line break-words text-base leading-relaxed text-white sm:text-lg">
+                {popupBody}
+              </p>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

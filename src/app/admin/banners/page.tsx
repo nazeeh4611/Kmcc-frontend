@@ -109,11 +109,14 @@ type BannerImage = {
   id: string;
   url: string;
   alt: string;
+  description: string;
   createdAt: string;
 };
 
 const MAX_SIZE = 5 * 1024 * 1024;
 const ACCEPTED = ["image/png", "image/jpeg", "image/webp"];
+const TITLE_MAX = 120;
+const DESCRIPTION_MAX = 2000;
 
 // Tolerant mapping: if the API shape differs slightly, we still get a URL
 // instead of an undefined src that silently renders nothing.
@@ -121,6 +124,7 @@ const toBanner = (slide: any): BannerImage => ({
   id: String(slide._id ?? slide.id),
   url: slide.image?.url ?? slide.image?.secure_url ?? slide.imageUrl ?? slide.url ?? "",
   alt: slide.title ?? "",
+  description: slide.description ?? "",
   createdAt: slide.createdAt ?? "",
 });
 
@@ -179,7 +183,10 @@ function BannerCard({
       </div>
       <div className="p-3">
         <p className="truncate text-sm font-medium text-foreground">{banner.alt || "Untitled banner"}</p>
-        <p className="text-xs text-muted-foreground">
+        {banner.description && (
+          <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{banner.description}</p>
+        )}
+        <p className="mt-1 text-xs text-muted-foreground">
           {banner.createdAt ? new Date(banner.createdAt).toLocaleString() : ""}
         </p>
       </div>
@@ -197,6 +204,7 @@ export default function AdminBannersPage() {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -257,13 +265,26 @@ export default function AdminBannersPage() {
       return;
     }
     setFile(picked);
-    setTitle((current) => current || picked.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " "));
+    setTitle((current) =>
+      (current || picked.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ")).slice(0, TITLE_MAX)
+    );
   };
 
   const handleUpload = async () => {
     if (!file || uploading) return;
-    if (title.trim().length < 2) {
+    const cleanTitle = title.trim();
+    const cleanDescription = description.trim();
+
+    if (cleanTitle.length < 2) {
       toast.error("Enter a title of at least 2 characters.");
+      return;
+    }
+    if (cleanTitle.length > TITLE_MAX) {
+      toast.error(`Title can be at most ${TITLE_MAX} characters.`);
+      return;
+    }
+    if (cleanDescription.length > DESCRIPTION_MAX) {
+      toast.error(`Description can be at most ${DESCRIPTION_MAX} characters.`);
       return;
     }
 
@@ -274,7 +295,8 @@ export default function AdminBannersPage() {
     try {
       const formData = new FormData();
       formData.append("image", file);
-      formData.append("title", title.trim());
+      formData.append("title", cleanTitle);
+      formData.append("description", cleanDescription);
       await adminApiClient.post("/carousel", formData, {
         onUploadProgress: (e) => {
           if (e.total) setProgress(Math.round((e.loaded / e.total) * 100));
@@ -290,14 +312,15 @@ export default function AdminBannersPage() {
     // The upload succeeded. A failed refresh must not be reported as a failed upload.
     clearSelection();
     setTitle("");
+    setDescription("");
     setUploading(false);
     const fresh = await load(true);
     const added = fresh.filter((b) => !previousIds.has(b.id)).map((b) => b.id);
     setNewIds(new Set(added));
     toast.success(
       added.length
-      ? "Banner uploaded. It&apos;s now in the list below."
-: "Banner uploaded, but the list didn&apos;t show it. Refresh the page to check."
+        ? "Banner uploaded. It's now in the list below."
+        : "Banner uploaded, but the list didn't show it. Refresh the page to check."
     );
   };
 
@@ -316,6 +339,8 @@ export default function AdminBannersPage() {
       setDeleting(false);
     }
   };
+
+  const descriptionLeft = DESCRIPTION_MAX - description.length;
 
   return (
     <div className="min-h-screen bg-surface">
@@ -348,7 +373,11 @@ export default function AdminBannersPage() {
                 <div className="overflow-hidden rounded-xl border border-border">
                   <div className="relative aspect-video bg-primary/5">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={previewUrl} alt="Selected banner preview" className="absolute inset-0 h-full w-full object-cover" />
+                    <img
+                      src={previewUrl}
+                      alt="Selected banner preview"
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
                   </div>
                   <div className="flex items-center justify-between gap-3 px-4 py-2">
                     <div className="min-w-0">
@@ -357,7 +386,13 @@ export default function AdminBannersPage() {
                         {formatSize(file.size)} · Not uploaded yet
                       </p>
                     </div>
-                    <Button variant="outline" size="icon" label="Remove selected image" onClick={clearSelection} disabled={uploading}>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      label="Remove selected image"
+                      onClick={clearSelection}
+                      disabled={uploading}
+                    >
                       <Icon name="x" />
                     </Button>
                   </div>
@@ -395,10 +430,35 @@ export default function AdminBannersPage() {
                   id="bannerTitle"
                   type="text"
                   value={title}
+                  maxLength={TITLE_MAX}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Describe the image"
+                  placeholder="Short title for the image"
                   disabled={uploading}
                   className="mt-1 w-full rounded-xl border border-border px-4 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-60"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-baseline justify-between">
+                  <label htmlFor="bannerDescription" className="text-sm font-medium text-foreground">
+                    Description (optional)
+                  </label>
+                  <span
+                    className={`text-xs ${descriptionLeft < 100 ? "text-red-600" : "text-muted-foreground"}`}
+                    aria-live="polite"
+                  >
+                    {description.length}/{DESCRIPTION_MAX}
+                  </span>
+                </div>
+                <textarea
+                  id="bannerDescription"
+                  value={description}
+                  maxLength={DESCRIPTION_MAX}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Shown in full when visitors click the banner text"
+                  rows={6}
+                  disabled={uploading}
+                  className="mt-1 w-full resize-y rounded-xl border border-border px-4 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-60"
                 />
               </div>
 
@@ -469,7 +529,8 @@ export default function AdminBannersPage() {
         onConfirm={handleDelete}
         loading={deleting}
         title="Delete this banner?"
-description={`"${pendingDelete?.alt || "This banner"}" will be permanently removed from the homepage rotation. This can&apos;t be undone.`}        confirmLabel="Delete"
+        description={`"${pendingDelete?.alt || "This banner"}" will be permanently removed from the homepage rotation. This can't be undone.`}
+        confirmLabel="Delete"
       />
     </div>
   );
