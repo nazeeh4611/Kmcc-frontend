@@ -18,9 +18,9 @@ export default function SecretariatMedia() {
         primaryInk="brass"
       />
       <CommitteeSection
-        type="womens_wing"
+        type="advisory_committee"
         eyebrow="Community"
-        title="Women's Wing"
+        title="Advisory Committee"
         primaryInk="maroon"
       />
       <CommitteeSection

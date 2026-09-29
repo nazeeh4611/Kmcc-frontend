@@ -335,7 +335,7 @@ const COMMITTEE_TYPES = [
   { value: "executive", label: "Executive Committee", icon: Award },
   { value: "secretariat", label: "Secretariat", icon: Users },
   { value: "it_team", label: "IT & Media Team", icon: Shield },
-  { value: "womens_wing", label: "Women's Wing", icon: Users },
+  { value: "advisory_committee", label: "Advisory Committee", icon: Users },
   { value: "youth_wing", label: "Youth Wing", icon: Users },
 ];
 
