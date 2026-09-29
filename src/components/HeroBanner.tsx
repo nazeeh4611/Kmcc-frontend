@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { publicApiClient } from "@/lib/publicApiClient";
@@ -18,7 +18,9 @@ export default function HeroBanner() {
   const [current, setCurrent] = useState(0);
   const [loading, setLoading] = useState(true);
   const [textOpen, setTextOpen] = useState(false);
+  const [truncated, setTruncated] = useState(false);
   const [mounted, setMounted] = useState(false); // portal needs document
+  const textRef = useRef<HTMLParagraphElement>(null);
 
   useEffect(() => setMounted(true), []);
 
@@ -53,7 +55,7 @@ export default function HeroBanner() {
     [banners.length]
   );
 
-  // Autoplay pauses while the popup is open so the text doesn't change under the reader.
+  // Autoplay pauses while the modal is open so the text doesn't change under the reader.
   useEffect(() => {
     if (banners.length <= 1 || textOpen) return;
     const interval = setInterval(() => {
@@ -62,7 +64,7 @@ export default function HeroBanner() {
     return () => clearInterval(interval);
   }, [banners.length, textOpen]);
 
-  // Escape to close + lock page scroll while the popup is open.
+  // Escape to close + lock page scroll while the modal is open.
   useEffect(() => {
     if (!textOpen) return;
     const onKey = (e: KeyboardEvent) => {
@@ -79,6 +81,17 @@ export default function HeroBanner() {
 
   const active = banners[current];
   const description = active?.description ?? "";
+
+  // Show "Read more" only when the 2-line clamp is actually cutting text off.
+  useEffect(() => {
+    const check = () => {
+      const el = textRef.current;
+      setTruncated(!!el && el.scrollHeight > el.clientHeight + 1);
+    };
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, [description, current, banners.length]);
 
   return (
     <div className="relative h-[420px] w-full overflow-hidden rounded-2xl bg-green-900 shadow-card-lg sm:h-[520px] lg:h-[640px]">
@@ -139,23 +152,33 @@ export default function HeroBanner() {
             </>
           )}
 
-          {/* Bar only renders if there's something to show: a description or multiple slides */}
+          {/* Bar renders only if there is a description or multiple slides (dots) */}
           {(description || banners.length > 1) && (
-            <div className="absolute bottom-4 left-4 right-4 z-20 flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/20 px-4 py-3 backdrop-blur-sm">
-              {description ? (
-                <button
-                  type="button"
-                  onClick={() => setTextOpen(true)}
-                  aria-haspopup="dialog"
-                  className="min-w-0 flex-1 cursor-pointer text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-brass/60"
-                >
-                  <span className="block truncate text-sm font-medium text-brass">{description}</span>
-                </button>
-              ) : (
-                <span className="flex-1" />
-              )}
+            <div className="absolute bottom-4 left-4 right-4 z-20 flex items-end justify-between gap-3 rounded-xl border border-white/10 bg-black/40 px-4 py-3 backdrop-blur-sm">
+              <div className="min-w-0 flex-1">
+                {description && (
+                  <>
+                    <p
+                      ref={textRef}
+                      className="line-clamp-2 whitespace-pre-line break-words text-sm leading-snug text-white"
+                    >
+                      {description}
+                    </p>
+                    {truncated && (
+                      <button
+                        type="button"
+                        onClick={() => setTextOpen(true)}
+                        aria-haspopup="dialog"
+                        className="mt-1 text-xs font-semibold text-white underline underline-offset-2 hover:text-white/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+                      >
+                        Read more
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
               {banners.length > 1 && (
-                <div className="flex flex-shrink-0 gap-1.5">
+                <div className="flex flex-shrink-0 gap-1.5 pb-1">
                   {banners.map((banner, index) => (
                     <button
                       key={banner.id}
@@ -182,8 +205,8 @@ export default function HeroBanner() {
         </>
       )}
 
-      {/* Full-text popup: blurred backdrop, white description only. Portaled to <body>
-          so the hero's overflow-hidden / rounded corners can't clip it. */}
+      {/* Full-text modal: blurred backdrop, white text. Portaled to <body> so the
+          hero's overflow-hidden / rounded corners can't clip it. */}
       {mounted &&
         textOpen &&
         description &&
