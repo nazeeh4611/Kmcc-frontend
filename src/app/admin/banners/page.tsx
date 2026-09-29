@@ -436,7 +436,7 @@ export default function AdminBannersPage() {
             </div>
           ) : loadError ? (
             <Card className="border-2 border-dashed p-12 text-center">
-              <p className="font-medium text-foreground">Couldn't load banners</p>
+              <p className="font-medium text-foreground">Could not load banners</p>
               <p className="mt-1 text-sm text-muted-foreground">{loadError}</p>
               <Button variant="outline" className="mt-4" onClick={() => load()}>
                 Try again
