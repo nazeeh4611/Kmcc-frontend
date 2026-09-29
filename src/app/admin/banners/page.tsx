@@ -296,8 +296,8 @@ export default function AdminBannersPage() {
     setNewIds(new Set(added));
     toast.success(
       added.length
-        ? "Banner uploaded. It's now in the list below."
-        : "Banner uploaded, but the list didn't show it. Refresh the page to check."
+      ? "Banner uploaded. It&apos;s now in the list below."
+: "Banner uploaded, but the list didn&apos;t show it. Refresh the page to check."
     );
   };
 
@@ -469,8 +469,7 @@ export default function AdminBannersPage() {
         onConfirm={handleDelete}
         loading={deleting}
         title="Delete this banner?"
-        description={`"${pendingDelete?.alt || "This banner"}" will be permanently removed from the homepage rotation. This can't be undone.`}
-        confirmLabel="Delete"
+description={`"${pendingDelete?.alt || "This banner"}" will be permanently removed from the homepage rotation. This can&apos;t be undone.`}        confirmLabel="Delete"
       />
     </div>
   );
